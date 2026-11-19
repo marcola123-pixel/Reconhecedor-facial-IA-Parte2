@@ -1,0 +1,85 @@
+# ===== DADOS PRIVADOS (LGPD) — NUNCA versionar =====
+data/private/
+data/raw/
+data/processed/
+faces/
+dataset/
+dataset_bruto/
+classes.json
+embeddings/
+database/
+consent/
+*.db
+*.sqlite
+*.npz
+logs/
+# ===== modelos / checkpoints (podem conter informação biométrica) =====
+checkpoints/
+runs/
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.safetensors
+weights.bin
+
+# ===== segredos e TLS =====
+certs/
+.env
+*.pem
+*.key
+
+# ===== python / ambiente =====
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+
+# ===== BACKUPS E ARQUIVOS LOCAIS =====
+*.backup_*
+*.backup*
+*.bak
+*.orig
+backups/
+android_backup_*/
+README_corrigido.md
+README_backup_*.md
+
+# ===== DADOS E SEGREDOS ADICIONAIS =====
+*.sqlite3
+*.p12
+*.pfx
+.env.*
+!.env.example
+
+# ===== ARQUIVOS TEMPORARIOS =====
+*.tmp
+*.temp
+
+
+# ===== ANDROID / GRADLE =====
+.gradle/
+**/.gradle/
+**/build/
+.android/
+.idea/
+*.iml
+local.properties
+**/local.properties
+*.apk
+*.aab
+*.jks
+*.keystore
+*.hprof
+*.log
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Backups Android
+**/*_backup.xml
+**/*.backup.xml

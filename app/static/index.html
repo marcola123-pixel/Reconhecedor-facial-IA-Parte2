@@ -1,0 +1,549 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#090d0b">
+    <title>Next Face | Painel de Controle</title>
+    <link rel="stylesheet" href="/static/style.css?v=settings1">
+    <script src="/static/app.js?v=settings1" defer></script>
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar">
+            <a class="brand" href="/" aria-label="Next Face - início">
+                <span class="brand-mark">N</span>
+                <span class="brand-name">NEXT<span>FACE</span></span>
+            </a>
+
+            <div class="sidebar-label">MENU PRINCIPAL</div>
+            <nav class="navigation" aria-label="Navegação principal">
+                <button class="nav-item active" data-page="dashboard">
+                    <span class="nav-icon">▦</span>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-item" data-page="recognition">
+                    <span class="nav-icon">◎</span>
+                    <span>Reconhecimento</span>
+                </button>
+                <button class="nav-item" data-page="people">
+                    <span class="nav-icon">♙</span>
+                    <span>Pessoas</span>
+                </button>
+                <button class="nav-item" data-page="history">
+                    <span class="nav-icon">◷</span>
+                    <span>Histórico</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-label secondary-label">SISTEMA</div>
+            <nav class="navigation" aria-label="Configurações">
+                <button class="nav-item" data-page="security">
+                    <span class="nav-icon">◇</span>
+                    <span>Segurança</span>
+                </button>
+                <button class="nav-item" data-page="settings">
+                    <span class="nav-icon">⚙</span>
+                    <span>Configurações</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-bottom">
+                <div class="system-indicator">
+                    <span class="status-dot" id="sidebar-status-dot"></span>
+                    <div>
+                        <strong id="sidebar-status">Verificando sistema</strong>
+                        <small>Servidor de reconhecimento</small>
+                    </div>
+                </div>
+                <div class="sidebar-version">NEXT FACE <span>PREMIUM</span></div>
+            </div>
+        </aside>
+
+        <main class="main-area">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="mobile-menu" id="mobile-menu" aria-label="Abrir menu">☰</button>
+                    <div>
+                        <div class="breadcrumb">NEXT FACE <span>/</span> <span id="breadcrumb-current">DASHBOARD</span></div>
+                        <h1 id="page-heading">Dashboard</h1>
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <div class="server-pill">
+                        <span class="status-dot" id="top-status-dot"></span>
+                        <span id="top-status">Conectando</span>
+                    </div>
+                    <div class="clock" id="clock">--:--:--</div>
+                    <div class="profile-avatar">NF</div>
+                </div>
+            </header>
+
+            <div class="content">
+                <!-- DASHBOARD -->
+                <section class="page active" id="page-dashboard">
+                    <div class="welcome-row">
+                        <div>
+                            <p class="eyebrow">CENTRAL DE OPERAÇÕES</p>
+                            <h2>Visão geral do sistema</h2>
+                            <p class="muted">Acompanhe o funcionamento do reconhecimento facial em tempo real.</p>
+                        </div>
+                        <button class="button button-primary" data-go="recognition">
+                            <span>◎</span> Abrir reconhecimento
+                        </button>
+                    </div>
+
+                    <div class="stats-grid">
+    <article class="stat-card">
+        <div class="stat-top">
+            <span class="stat-label">Pessoas cadastradas</span>
+            <span class="stat-icon">&#9817;</span>
+        </div>
+        <div class="stat-value" id="people-count">&#8212;</div>
+        <div class="stat-foot">Registros na galeria facial</div>
+    </article>
+
+    <article class="stat-card">
+        <div class="stat-top">
+            <span class="stat-label">Reconhecimentos</span>
+            <span class="stat-icon">&#9678;</span>
+        </div>
+        <div class="stat-value" id="recognitions-count">0</div>
+        <div class="stat-foot">Identifica&#231;&#245;es no per&#237;odo de reten&#231;&#227;o</div>
+    </article>
+
+    <article class="stat-card">
+        <div class="stat-top">
+            <span class="stat-label">Acessos autorizados</span>
+            <span class="stat-icon success">&#10003;</span>
+        </div>
+        <div class="stat-value" id="authorized-count">0</div>
+        <div class="stat-foot">Acessos autorizados no per&#237;odo</div>
+    </article>
+
+    <article class="stat-card">
+        <div class="stat-top">
+            <span class="stat-label">Acessos negados</span>
+            <span class="stat-icon danger">&#215;</span>
+        </div>
+        <div class="stat-value" id="denied-count">0</div>
+        <div class="stat-foot">Acessos negados no per&#237;odo</div>
+    </article>
+</div>
+
+<div class="dashboard-grid">
+                        <article class="panel system-panel">
+                            <div class="panel-heading">
+                                <div>
+                                    <p class="eyebrow">MONITORAMENTO</p>
+                                    <h3>Status da plataforma</h3>
+                                </div>
+                                <span class="live-label"><span class="status-dot" id="dashboard-status-dot"></span> AO VIVO</span>
+                            </div>
+                            <div class="system-status-row">
+                                <div class="system-symbol">N</div>
+                                <div class="system-description">
+                                    <strong id="dashboard-status-title">Aguardando conexão</strong>
+                                    <span id="dashboard-status-description">Consultando o servidor...</span>
+                                </div>
+                                <span class="status-tag" id="dashboard-status-tag">VERIFICANDO</span>
+                            </div>
+                            <div class="panel-divider"></div>
+                            <div class="info-line">
+                                <span>API de reconhecimento</span>
+                                <strong id="api-status">Verificando</strong>
+                            </div>
+                            <div class="info-line">
+                                <span>Última verificação</span>
+                                <strong id="last-check">—</strong>
+                            </div>
+
+                            <div class="panel-divider"></div>
+                            <p class="eyebrow">INFORMA&#199;&#213;ES T&#201;CNICAS</p>
+
+                            <div class="info-line">
+                                <span>Modelo ativo</span>
+                                <strong id="model-name">&#8212;</strong>
+                            </div>
+                            <div class="info-line">
+                                <span>Similaridade m&#237;nima</span>
+                                <strong id="threshold-value">&#8212;</strong>
+                            </div>
+                            <div class="info-line">
+                                <span>Dispositivo</span>
+                                <strong id="device-name">&#8212;</strong>
+                            </div>
+                            <button class="text-button" id="refresh-status">↻ Atualizar status</button>
+                        </article>
+
+                        <article class="panel activity-panel">
+                            <div class="panel-heading">
+                                <div>
+                                    <p class="eyebrow">ATIVIDADE</p>
+                                    <h3>Últimas identificações</h3>
+                                </div>
+                                <button class="text-button" data-go="history">Ver histórico →</button>
+                            </div>
+                            <div id="recent-events" class="event-list">
+                                <div class="empty-state">Nenhuma identificação nesta sessão.</div>
+                            </div>
+                            <p class="panel-note">Estes registros são temporários nesta versão da interface.</p>
+                        </article>
+                    </div>
+                </section>
+
+                <!-- RECONHECIMENTO -->
+                <section class="page" id="page-recognition">
+                    <div class="page-intro">
+                        <p class="eyebrow">IDENTIFICAÇÃO BIOMÉTRICA</p>
+                        <h2>Reconhecimento facial</h2>
+                        <p class="muted">Capture uma imagem e consulte a identificação realizada pelo modelo.</p>
+                    </div>
+
+                    <div class="recognition-grid">
+                        <article class="panel camera-panel">
+                            <div class="panel-heading">
+                                <div>
+                                    <p class="eyebrow">CAPTURA DE IMAGEM</p>
+                                    <h3>Câmera</h3>
+                                </div>
+                                <span class="camera-state" id="camera-state">DESLIGADA</span>
+                            </div>
+                            <div class="camera-frame" id="camera-frame">
+                                <video id="video" autoplay muted playsinline></video>
+                                <div class="camera-placeholder" id="camera-placeholder">
+                                    <div class="camera-placeholder-icon">◎</div>
+                                    <strong>Câmera desligada</strong>
+                                    <span>Ative a câmera para iniciar a análise facial.</span>
+                                </div>
+                                <div class="camera-corner corner-tl"></div>
+                                <div class="camera-corner corner-tr"></div>
+                                <div class="camera-corner corner-bl"></div>
+                                <div class="camera-corner corner-br"></div>
+                                <div class="camera-live" id="camera-live">● CAPTURA ATIVA</div>
+                            </div>
+                            <canvas id="canvas" hidden></canvas>
+                            <p class="camera-hint" id="camera-hint">A permissão de acesso à câmera será solicitada pelo navegador.</p>
+                            <div class="camera-actions">
+                                <button class="button button-primary" id="camera-button">◎ Ativar câmera</button>
+                            </div>
+                        </article>
+
+                        <article class="panel result-panel">
+                            <div class="panel-heading">
+                                <div>
+                                    <p class="eyebrow">RESULTADO DA ANÁLISE</p>
+                                    <h3>Identificação</h3>
+                                </div>
+                                <span class="result-state neutral" id="result-state">AGUARDANDO</span>
+                            </div>
+
+                            <div class="result-identity">
+                                <div class="identity-avatar" id="identity-avatar">&#128100;</div>
+                                <div>
+                                    <span class="result-caption">PESSOA IDENTIFICADA</span>
+                                    <strong id="person-name">Aguardando captura</strong>
+                                    <span class="muted" id="person-description">Nenhuma análise realizada.</span>
+                                </div>
+                            </div>
+
+                            <div class="similarity-section">
+                                <div class="similarity-heading">
+                                    <span>Similaridade cosseno</span>
+                                    <strong id="similarity-value">—</strong>
+                                </div>
+                                <div class="similarity-track">
+                                    <div class="similarity-fill" id="similarity-bar"></div>
+                                </div>
+                                <p class="similarity-note">Similaridade é uma medida de proximidade entre embeddings, não uma probabilidade de identidade.</p>
+                            </div>
+
+                            <div class="access-decision" id="access-decision">
+                                <span class="decision-symbol">—</span>
+                                <div>
+                                    <strong>Aguardando decisão</strong>
+                                    <span>O resultado aparecerá após a análise.</span>
+                                </div>
+                            </div>
+
+                            <div class="result-details">
+                                <div class="info-line">
+                                    <span>Modelo</span>
+                                    <strong id="recognition-model">—</strong>
+                                </div>
+                                <div class="info-line">
+                                    <span>Limite configurado</span>
+                                    <strong id="recognition-threshold">—</strong>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+
+                <!-- PÁGINAS EM CONSTRUÇÃO -->
+
+                <section class="page" id="page-people">
+                    <div class="page-intro">
+                        <p class="eyebrow">BASE BIOMÉTRICA</p>
+                        <h2>Pessoas</h2>
+                        <p class="muted">
+                            Gerencie os cadastros presentes na galeria facial.
+                        </p>
+                    </div>
+
+                    <article class="panel people-auth-panel">
+                        <div class="panel-heading">
+                            <div>
+                                <p class="eyebrow">ACESSO ADMINISTRATIVO</p>
+                                <h3>Autenticação</h3>
+                                <p class="muted">
+                                    Informe seu token para administrar a galeria.
+                                </p>
+                            </div>
+                            <span class="security-indicator">PROTEGIDO</span>
+                        </div>
+
+                        <div class="people-token-row">
+                            <input
+                                type="password"
+                                id="admin-token"
+                                placeholder="Token administrativo"
+                                autocomplete="off"
+                            >
+                            <button class="button-primary" id="save-admin-token">
+                                Conectar
+                            </button>
+                            <button class="button-secondary" id="disconnect-admin">
+                                Desconectar
+                            </button>
+                        </div>
+
+                        <p class="panel-note" id="admin-token-status">
+                            Informe o token para carregar os cadastros.
+                        </p>
+                    </article>
+
+                    <div class="people-grid">
+                        <article class="panel people-register-panel">
+                            <div class="panel-heading">
+                                <div>
+                                    <p class="eyebrow">NOVO CADASTRO</p>
+                                    <h3>Cadastrar pessoa</h3>
+                                </div>
+                                <span class="people-icon">+</span>
+                            </div>
+
+                            <form id="people-form">
+                                <label class="people-label" for="person-name-input">
+                                    Nome da pessoa
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="person-name-input"
+                                    placeholder="Ex.: Maria Silva"
+                                    maxlength="80"
+                                    required
+                                >
+
+                                <label class="people-label" for="person-images-input">
+                                    Fotografias faciais
+                                </label>
+
+                                <input
+                                    type="file"
+                                    id="person-images-input"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    multiple
+                                    required
+                                >
+
+                                <p class="panel-note">
+                                    Selecione pelo menos 3 imagens nítidas da mesma pessoa.
+                                    Recomendamos fotos com pequenas variações de ângulo e iluminação.
+                                </p>
+
+                                <div class="selected-images-info" id="selected-images-info">
+                                    Nenhuma imagem selecionada.
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    class="button-primary people-submit"
+                                    id="register-person-button"
+                                >
+                                    Cadastrar pessoa
+                                </button>
+                            </form>
+
+                            <div class="people-feedback" id="people-feedback" hidden></div>
+                        </article>
+
+                        <article class="panel people-list-panel">
+                            <div class="panel-heading">
+                                <div>
+                                    <p class="eyebrow">GALERIA FACIAL</p>
+                                    <h3>Pessoas cadastradas</h3>
+                                </div>
+
+                                <button
+                                    class="button-secondary"
+                                    id="refresh-people"
+                                    type="button"
+                                >
+                                    Atualizar
+                                </button>
+                            </div>
+
+                            <div class="people-list-summary">
+                                <span>Total de pessoas</span>
+                                <strong id="people-total">—</strong>
+                            </div>
+
+                            <input
+                                type="search"
+                                id="people-search"
+                                placeholder="Pesquisar pelo nome..."
+                                autocomplete="off"
+                            >
+
+                            <div id="people-list" class="people-list">
+                                <div class="empty-state">
+                                    Conecte-se como administrador para visualizar a galeria.
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="page" id="page-history">
+                    <div class="page-intro">
+                        <p class="eyebrow">RASTREABILIDADE</p>
+                        <h2>Histórico de acessos</h2>
+                        <p class="muted">Consulte os registros persistidos de reconhecimento e controle de acesso.</p>
+                    </div>
+                    <article class="panel">
+                        <div class="panel-heading">
+                            <div>
+                                <p class="eyebrow">REGISTROS PERSISTENTES</p>
+                                <h3>Histórico de acessos</h3>
+                            </div>
+                            <button class="text-button" id="clear-events">Limpar registros da tela</button>
+                        </div>
+                        <div id="history-events" class="event-list">
+                            <div class="empty-state">Conecte-se como administrador para consultar o histórico.</div>
+                        </div>
+                        <p class="panel-note">Os registros são armazenados no servidor por até 30 dias. Limpar os eventos da sessão não apaga este histórico.</p>
+                    </article>
+                </section>
+
+                <section class="page" id="page-security">
+    <div class="page-intro">
+        <p class="eyebrow">CONTROLE E PROTE&#199;&#195;O</p>
+        <h2>Central de Segurança</h2>
+        <p class="muted">
+            Auditoria administrativa e monitoramento de eventos.
+        </p>
+    </div>
+
+    <div class="security-stats">
+        <article class="panel security-stat">
+            <span>Eventos consultados</span>
+            <strong id="security-total">&#8212;</strong>
+        </article>
+
+        <article class="panel security-stat">
+            <span>Acessos negados</span>
+            <strong id="security-denied">&#8212;</strong>
+        </article>
+
+        <article class="panel security-stat">
+            <span>Cadastros realizados</span>
+            <strong id="security-created">&#8212;</strong>
+        </article>
+
+        <article class="panel security-stat">
+            <span>Exclusões realizadas</span>
+            <strong id="security-deleted">&#8212;</strong>
+        </article>
+    </div>
+
+    <article class="panel security-audit-panel">
+        <div class="panel-heading">
+            <div>
+                <p class="eyebrow">AUDITORIA ADMINISTRATIVA</p>
+                <h3>Eventos de segurança</h3>
+                <p class="muted">
+                    Últimos registros disponíveis no servidor.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                class="button-secondary"
+                id="refresh-security"
+            >
+                Atualizar
+            </button>
+        </div>
+
+        <p id="security-status" class="panel-note" role="status">
+            Conecte-se como administrador na p&#225;gina Pessoas.
+        </p>
+
+        <div id="security-events" class="event-list">
+            <div class="empty-state">
+                Aguardando autenticação administrativa.
+            </div>
+        </div>
+
+        <p class="panel-note">
+            Os indicadores consideram somente os registros
+            retornados pela consulta, limitada aos 200 eventos
+            mais recentes. A reten&#231;&#227;o &#233; de at&#233; 30 dias.
+        </p>
+    </article>
+</section>
+
+                <section class="page" id="page-settings">
+                    <div class="page-intro">
+                        <p class="eyebrow">PERSONALIZAÇÃO</p>
+                        <h2>Configurações</h2>
+                        <p class="muted">Informações técnicas e parâmetros do sistema.</p>
+                    </div>
+                    <article class="panel settings-panel">
+                        <div class="panel-heading">
+                            <div>
+                                <p class="eyebrow">INFORMAÇÕES TÉCNICAS</p>
+                                <h3>Modelo de reconhecimento</h3>
+                            </div>
+                        </div>
+                        <div class="info-line"><span>Experimento carregado</span><strong id="settings-model">—</strong></div>
+                        <div class="info-line"><span>Dispositivo</span><strong id="settings-device">—</strong></div>
+                        <div class="info-line"><span>Similaridade mínima</span><strong id="settings-threshold">—</strong></div>
+                        <div class="info-line"><span>Pessoas na galeria</span><strong id="settings-people">—</strong></div>
+                        <div class="settings-status-grid">
+    <div class="info-line">
+        <span>Estado da API</span>
+        <strong id="settings-api-status">Aguardando consulta</strong>
+    </div>
+    <div class="info-line">
+        <span>Última atualização</span>
+        <strong id="settings-last-update">&#8212;</strong>
+    </div>
+</div>
+<button type="button" id="refresh-settings" class="settings-refresh-button">Atualizar informações</button>
+<p class="panel-note">Os parâmetros são somente para consulta nesta versão. Alterações serão protegidas por autenticação administrativa.</p>
+                    </article>
+                </section>
+
+                <footer class="footer">
+                    <span>NEXT FACE <strong>PREMIUM</strong></span>
+                    <span>Sistema de reconhecimento facial</span>
+                </footer>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
