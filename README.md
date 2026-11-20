@@ -6,7 +6,7 @@
 **PROFESSOR: EDSON TAKASHI MATSUBARA**
 **TRABALHO: RECONHECIMENTO FACIAL 1:N — PARTE 2**
 
-### Autor
+## Autor
 
 **Marcos Vinicius Moreira Cairo**
 **RGA:** 202419040675
@@ -44,7 +44,7 @@ O que se investiga na Parte 1 é *qual rede e qual função de perda* produzem o
 
 ## Estrutura
 
-```
+```text
 configs/                 um YAML por experimento (hipótese + hiperparâmetros + seed)
 src/facerec/             splits (por identidade), metrics, losses, models, data, train, evaluation, gallery, detection
 scripts/                 prepare_faces, evaluate_private, enroll, aggregate_results, gerar_certificado
@@ -170,36 +170,36 @@ A interface possui seis paginas:
 
 Na raiz do projeto, com Python 3.11 instalado:
 
-~~~powershell
+```powershell
 python -m venv venv
 .\venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 python -m pip install -e .
-~~~
+```
 
 Gere o certificado TLS caso ainda não exista:
 
-~~~powershell
+```powershell
 python scripts/gerar_certificado.py
-~~~
+```
 
 Configure o experimento e a galeria:
 
-~~~powershell
+```powershell
 $env:FACEREC_RUN = "runs/e07_facenet_full"
 $env:FACEREC_GALLERY = "embeddings/gallery_e07_v2.npz"
 $env:PORTEIRO_TOKEN = python -c "import secrets; print(secrets.token_urlsafe(32))"
-~~~
+```
 
 O comando gera uma credencial aleatória para a sessão atual do PowerShell. Não publique seu valor; configure uma nova credencial forte em cada ambiente.
 
 Inicie o servidor:
 
-~~~powershell
+```powershell
 python -m app.main
-~~~
+```
 
-Acesse https://127.0.0.1:8443 no navegador.
+Acesse [Acessar aplicacao](https://127.0.0.1:8443) no navegador.
 
 O modelo precisa estar disponível em
 `runs/e07_facenet_full/best.pt`, acompanhado de `meta.json`. **Os pesos não estão no GitHub**: para reproduzir a inferência, é necessário obter ou treinar o checkpoint correspondente. Galerias e certificados locais também não são distribuídos.
@@ -258,9 +258,9 @@ android/app/build/outputs/apk/debug/app-debug.apk
 Durante os testes com dispositivo conectado por USB,
 foi utilizado o encaminhamento da porta 8443:
 
-~~~powershell
+```powershell
 adb reverse tcp:8443 tcp:8443
-~~~
+```
 
 O APK e uma versão de desenvolvimento e não representa
 uma distribuição publica de producao.
@@ -269,18 +269,18 @@ uma distribuição publica de producao.
 
 A última execução completa informada, antes da publicação inicial da Parte 2, apresentou:
 
-~~~text
+```text
 95 passed in 7.05s
-~~~
+```
 
 A suite cobre API, autenticação, reconhecimento, cadastro,
 galeria, métricas, histórico, auditoria e rate limiting.
 
 Para executar novamente:
 
-~~~powershell
+```powershell
 python -m pytest tests -v --tb=short
-~~~
+```
 
 A aprovação dos testes automatizados deve ser complementada
 por verificações manuais no navegador e no Android.
