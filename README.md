@@ -374,7 +374,7 @@ de Inteligência Artificial por interfaces web e mobile.
 A última execução completa informada, antes da publicação inicial da Parte 2, apresentou:
 
 ```text
-95 passed in 7.05s
+155 passed in 6.86s
 ```
 
 A suite cobre API, autenticação, reconhecimento, cadastro,
@@ -407,13 +407,14 @@ Foram verificados:
 A câmera do navegador também foi testada com sucesso.
 
 A suíte automatizada foi executada com `python -m pytest -q`,
-com resultado de **95 testes aprovados**.
+com resultado de **155 testes aprovados**.
 
 ### Limitações e reprodutibilidade
 
-- O sistema utiliza MTCNN para detecção e recorte facial.
-  Não foi implementado alinhamento geométrico explícito
-  por landmarks; essa etapa permanece como melhoria futura.
+- O sistema utiliza MTCNN para detecção facial e oferece
+  os modos `legacy` (recorte convencional) e `aligned`
+  (alinhamento geométrico por cinco landmarks).
+  O modo `legacy` permanece como padrão.
 - A inferência com o E07 requer `best.pt` e `meta.json`
   compatíveis em `runs/e07_facenet_full/`.
 - Os pesos do modelo não são distribuídos pelo
@@ -426,6 +427,106 @@ com resultado de **95 testes aprovados**.
 - O ambiente demonstrado utiliza HTTPS local com certificado
   de desenvolvimento e não representa uma implantação
   de produção.
+
+## Avaliação experimental do alinhamento facial — E07
+
+### Objetivo e metodologia
+
+Foi realizado um experimento comparativo entre duas estratégias
+de pré-processamento facial:
+
+- **Legacy:** recorte facial convencional realizado pelo MTCNN.
+- **Aligned:** alinhamento geométrico baseado em cinco landmarks faciais.
+
+As estratégias utilizaram o mesmo modelo `e07_facenet_full`,
+com pesos idênticos e limiar de identificação `0.5838396380334074`.
+
+A avaliação utilizou 140 fotografias de 40 identidades
+selecionadas da partição de teste reconstruída do conjunto LFW.
+
+Foram consideradas 20 identidades conhecidas, com três imagens
+de cadastro e duas consultas por identidade, e 20 identidades
+desconhecidas, com duas consultas por identidade.
+
+O protocolo totalizou 60 imagens de cadastro e 80 consultas.
+A integridade das imagens foi verificada por hashes SHA-256.
+
+### Resultados
+
+| Métrica | Legacy | Aligned |
+|---|---:|---:|
+| Detecções bem-sucedidas | 140/140 | 140/140 |
+| DIR — identificação correta | 95% | 95% |
+| FRR — falsa rejeição | 5% | 5% |
+| FAR observado | 0% | 0% |
+| Identificações corretas | 38/40 | 38/40 |
+| Rejeições incorretas | 2/40 | 2/40 |
+| Falsas aceitações | 0/40 | 0/40 |
+| Tempo médio de detecção e pré-processamento | 35,45 ms | 35,23 ms |
+
+Os tempos foram medidos em CPU durante uma execução.
+Não incluem toda a inferência do sistema.
+
+A diferença de aproximadamente 0,62% no tempo médio
+não permite concluir superioridade de desempenho.
+
+### Auditoria pareada
+
+Uma segunda execução comparou individualmente as decisões
+das 80 consultas.
+
+A auditoria encontrou **zero decisões alteradas** entre
+Legacy e Aligned.
+
+As duas rejeições incorretas ocorreram nas mesmas consultas.
+Nenhuma identidade desconhecida foi aceita.
+
+Essa concordância não significa que embeddings e similaridades
+sejam idênticos, nem demonstra equivalência estatística geral.
+
+### Reprodutibilidade
+
+Os principais componentes experimentais são:
+
+- `src/facerec/alignment.py`
+- `src/facerec/detection.py`
+- `scripts/compare_alignment.py`
+- `scripts/run_alignment_experiment.py`
+- `scripts/audit_alignment_decisions.py`
+- `tests/test_compare_alignment.py`
+- `tests/test_audit_alignment_decisions.py`
+
+Para executar os testes automatizados:
+
+    python -m pytest -q
+
+Para executar o experimento:
+
+    python -u scripts/run_alignment_experiment.py
+
+A execução requer o checkpoint E07, o conjunto de imagens
+e o manifesto privado previamente preparado.
+
+O manifesto e os resultados ficam em
+`data/private/face_alignment_eval/`, diretório ignorado pelo Git.
+
+A aplicação utiliza `legacy` por padrão. O modo `aligned`
+exige uma galeria experimental isolada.
+
+### Limitações e conclusão
+
+A partição de teste foi reconstruída a partir da configuração
+e dos arquivos atualmente disponíveis, sem um manifesto
+histórico com hashes do treinamento original.
+
+O limiar foi originalmente calibrado para Legacy.
+A amostra também é limitada, e FAR observado de 0%
+não garante ausência de falsas aceitações em produção.
+
+**Conclusão:** nas condições avaliadas, o alinhamento
+geométrico não apresentou melhoria nas decisões de
+identificação do E07. Legacy permanece como padrão,
+enquanto Aligned é mantido como alternativa experimental.
 
 ## Privacidade (LGPD) — critério eliminatório
 
