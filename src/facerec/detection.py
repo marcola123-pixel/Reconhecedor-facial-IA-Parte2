@@ -23,9 +23,16 @@ class FaceDetector:
         self,
         image_size: int = 160,
         margin: int = 20,
-        device: Optional[str] = None
+        device: Optional[str] = None,
+        alignment: str = "legacy"
     ):
         from facenet_pytorch import MTCNN
+
+        if alignment not in {"legacy", "aligned"}:
+            raise ValueError("Modo de alinhamento invalido.")
+
+        self.alignment = alignment
+        self.image_size = image_size
 
         self.mtcnn = MTCNN(
             image_size=image_size,
@@ -42,7 +49,12 @@ class FaceDetector:
         img = img.convert("RGB")
 
         # Detecta todos os rostos.
-        boxes, probabilities = self.mtcnn.detect(img)
+        if self.alignment == "aligned":
+            boxes, probabilities, landmarks = self.mtcnn.detect(
+                img, landmarks=True
+            )
+        else:
+            boxes, probabilities = self.mtcnn.detect(img)
 
         if boxes is None or len(boxes) == 0:
             return None
@@ -54,6 +66,20 @@ class FaceDetector:
             )
 
         # Extrai o único rosto detectado.
+        if self.alignment == "aligned":
+            from .alignment import align_face
+
+            if landmarks is None or len(landmarks) != 1:
+                raise ValueError(
+                    "Landmarks indisponiveis para alinhamento."
+                )
+
+            return align_face(
+                img,
+                landmarks[0],
+                image_size=self.image_size
+            )
+
         face = self.mtcnn.extract(img, boxes, None)
 
         if face is None:
