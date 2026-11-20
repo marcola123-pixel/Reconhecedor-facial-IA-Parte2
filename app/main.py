@@ -548,6 +548,12 @@ def consultar_auditoria(limit: int = 100):
     }
 
 
+
+@app.get("/dashboard/estatisticas", dependencies=[Depends(require_admin)])
+def consultar_estatisticas_dashboard():
+    return read_history_stats()
+
+
 @app.get("/historico", dependencies=[Depends(require_admin)])
 def consultar_historico(limit: int = 100):
     registros = read_history(limit)
