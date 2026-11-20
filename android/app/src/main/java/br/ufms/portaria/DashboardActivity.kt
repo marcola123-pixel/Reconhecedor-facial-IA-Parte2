@@ -25,7 +25,9 @@ class DashboardActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.btnHistorico).setOnClickListener {
             startActivity(Intent(this, HistoricoActivity::class.java))
         }
-        configurarBotao(R.id.btnSeguranca, "Seguranca")
+        findViewById<TextView>(R.id.btnSeguranca).setOnClickListener {
+            startActivity(Intent(this, SegurancaActivity::class.java))
+        }
         configurarBotao(R.id.btnConfiguracoes, "Configuracoes")
 
         carregarIndicadores()

@@ -14,5 +14,8 @@
     <activity android:name=".PessoasActivity" android:exported="false" />
     <activity android:name=".CadastroPessoaActivity" android:exported="false" />
       <activity android:name=".HistoricoActivity" android:exported="false" />
-  </application>
+          <activity
+            android:name=".SegurancaActivity"
+            android:exported="false" />
+    </application>
 </manifest>
