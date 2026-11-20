@@ -1,5 +1,6 @@
-﻿package br.ufms.portaria
+package br.ufms.portaria
 
+import android.content.Intent
 import android.os.Bundle
 import android.graphics.Color
 import android.view.Gravity
@@ -20,9 +21,29 @@ class PessoasActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.btnAtualizarPessoas)
             .setOnClickListener { carregarPessoas() }
 
+        findViewById<TextView>(R.id.btnNovaPessoa)
+            .setOnClickListener {
+                if (!AdminSession.estaConectado()) {
+                    Toast.makeText(
+                        this,
+                        "Conecte-se como administrador primeiro.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    return@setOnClickListener
+                }
+
+                startActivity(
+                    Intent(this, CadastroPessoaActivity::class.java)
+                )
+            }
         carregarPessoas()
     }
 
+
+    override fun onResume() {
+        super.onResume()
+        carregarPessoas()
+    }
     private fun carregarPessoas() {
         val token = AdminSession.obterToken()
 

@@ -38,6 +38,7 @@ dependencies {
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.activity:activity-ktx:1.8.2")
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
 
     // CameraX (essencial para abrir a câmera e analisar os quadros)
     val cameraxVersion = "1.3.1"
