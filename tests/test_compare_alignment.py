@@ -435,3 +435,96 @@ def test_identification_rejects_inconsistent_dimensions():
             probe_indices=[1, 3, 4],
             threshold=0.5,
         )
+
+
+
+def test_end_to_end_counts_missing_known_probe():
+    from compare_alignment import evaluate_end_to_end_identification
+
+    embedded, labels = _synthetic_identification_data()
+
+    embedded["aligned"]["indices"] = embedded[
+        "aligned"
+    ]["indices"][[0, 2, 3, 4]]
+
+    embedded["aligned"]["embeddings"] = embedded[
+        "aligned"
+    ]["embeddings"][[0, 2, 3, 4]]
+
+    result = evaluate_end_to_end_identification(
+        embedded,
+        labels,
+        enroll_indices={"alice": [0], "bob": [2]},
+        probe_indices=[1, 3, 4],
+        threshold=0.5,
+    )
+
+    assert result["modes"]["legacy"]["dir"] == 1.0
+    assert result["modes"]["aligned"]["dir"] == 0.5
+    assert result["modes"]["aligned"]["frr_known"] == 0.5
+    assert result["modes"]["aligned"]["detection_fail_known"] == 1
+
+
+def test_end_to_end_counts_missing_unknown_probe():
+    from compare_alignment import evaluate_end_to_end_identification
+
+    embedded, labels = _synthetic_identification_data()
+
+    embedded["aligned"]["indices"] = embedded[
+        "aligned"
+    ]["indices"][:4]
+
+    embedded["aligned"]["embeddings"] = embedded[
+        "aligned"
+    ]["embeddings"][:4]
+
+    result = evaluate_end_to_end_identification(
+        embedded,
+        labels,
+        enroll_indices={"alice": [0], "bob": [2]},
+        probe_indices=[1, 3, 4],
+        threshold=0.5,
+    )
+
+    assert result["modes"]["aligned"]["far_unknown"] == 0.0
+    assert result["modes"]["aligned"]["detection_fail_unknown"] == 1
+
+
+def test_end_to_end_rejects_missing_enrollment():
+    import pytest
+    from compare_alignment import evaluate_end_to_end_identification
+
+    embedded, labels = _synthetic_identification_data()
+
+    embedded["aligned"]["indices"] = embedded[
+        "aligned"
+    ]["indices"][1:]
+
+    embedded["aligned"]["embeddings"] = embedded[
+        "aligned"
+    ]["embeddings"][1:]
+
+    with pytest.raises(ValueError, match="sem cadastro valido"):
+        evaluate_end_to_end_identification(
+            embedded,
+            labels,
+            enroll_indices={"alice": [0], "bob": [2]},
+            probe_indices=[1, 3, 4],
+            threshold=0.5,
+        )
+
+
+def test_end_to_end_rejects_data_leakage():
+    import pytest
+    from compare_alignment import evaluate_end_to_end_identification
+
+    embedded, labels = _synthetic_identification_data()
+
+    with pytest.raises(ValueError, match="compartilham"):
+        evaluate_end_to_end_identification(
+            embedded,
+            labels,
+            enroll_indices={"alice": [0], "bob": [2]},
+            probe_indices=[0, 3, 4],
+            threshold=0.5,
+        )

@@ -434,3 +434,151 @@ def validate_embedding_map(data, expected_dim=None):
         int(index): vector
         for index, vector in zip(indices, vectors)
     }
+
+
+
+def evaluate_end_to_end_identification(
+    embedded,
+    labels,
+    enroll_indices,
+    probe_indices,
+    threshold,
+):
+    """Avalia cada pipeline incluindo falhas de deteccao nos probes."""
+    import numpy as np
+
+    labels = np.asarray(labels)
+    threshold = float(threshold)
+
+    if not np.isfinite(threshold):
+        raise ValueError("Threshold invalido.")
+
+    if not enroll_indices:
+        raise ValueError("Cadastro vazio.")
+
+    enroll = {
+        name: [int(i) for i in indices]
+        for name, indices in enroll_indices.items()
+    }
+
+    probes = [int(i) for i in probe_indices]
+    all_enroll = [i for group in enroll.values() for i in group]
+
+    if not all_enroll or any(not group for group in enroll.values()):
+        raise ValueError("Cadastro incompleto.")
+
+    if len(all_enroll) != len(set(all_enroll)):
+        raise ValueError("Cadastro duplicado.")
+
+    if len(probes) != len(set(probes)):
+        raise ValueError("Probes duplicados.")
+
+    if set(all_enroll) & set(probes):
+        raise ValueError("Cadastro e teste compartilham imagens.")
+
+    selected = set(all_enroll) | set(probes)
+
+    if any(i < 0 or i >= len(labels) for i in selected):
+        raise ValueError("Indice fora do dataset.")
+
+    for name, group in enroll.items():
+        if any(labels[i] != name for i in group):
+            raise ValueError("Identidade inconsistente no cadastro.")
+
+    known_names = set(enroll)
+
+    if not probes:
+        raise ValueError("Nenhuma imagem de teste.")
+
+    n_known = sum(labels[i] in known_names for i in probes)
+    n_unknown = len(probes) - n_known
+
+    if not n_known or not n_unknown:
+        raise ValueError(
+            "Avaliacao exige conhecidos e desconhecidos."
+        )
+
+    result = {
+        "threshold": threshold,
+        "total_probes": len(probes),
+        "known_probes": n_known,
+        "unknown_probes": n_unknown,
+        "modes": {},
+    }
+
+    for mode in ("legacy", "aligned"):
+        vectors = validate_embedding_map(embedded[mode])
+
+        if any(i >= len(labels) for i in vectors):
+            raise ValueError("Indice de embedding fora do dataset.")
+
+        names = sorted(enroll)
+        prototypes = []
+
+        for name in names:
+            available = [
+                vectors[i] for i in enroll[name]
+                if i in vectors
+            ]
+
+            if not available:
+                raise ValueError(
+                    f"Identidade sem cadastro valido: {name}"
+                )
+
+            prototype = np.mean(available, axis=0)
+            norm = np.linalg.norm(prototype)
+
+            if not np.isfinite(norm) or norm <= 1e-12:
+                raise ValueError("Prototipo invalido.")
+
+            prototypes.append(prototype / norm)
+
+        proto_matrix = np.stack(prototypes)
+
+        correct = 0
+        false_reject = 0
+        misidentified = 0
+        false_accept = 0
+        detection_fail_known = 0
+        detection_fail_unknown = 0
+
+        for index in probes:
+            is_known = labels[index] in known_names
+
+            if index not in vectors:
+                if is_known:
+                    false_reject += 1
+                    detection_fail_known += 1
+                else:
+                    detection_fail_unknown += 1
+                continue
+
+            scores = proto_matrix @ vectors[index]
+            best_index = int(np.argmax(scores))
+            accepted = scores[best_index] >= threshold
+
+            if is_known:
+                if not accepted:
+                    false_reject += 1
+                elif names[best_index] == labels[index]:
+                    correct += 1
+                else:
+                    misidentified += 1
+            elif accepted:
+                false_accept += 1
+
+        result["modes"][mode] = {
+            "dir": correct / n_known,
+            "frr_known": false_reject / n_known,
+            "misid_known": misidentified / n_known,
+            "far_unknown": false_accept / n_unknown,
+            "correct_known": correct,
+            "false_reject_known": false_reject,
+            "misidentified_known": misidentified,
+            "false_accept_unknown": false_accept,
+            "detection_fail_known": detection_fail_known,
+            "detection_fail_unknown": detection_fail_unknown,
+        }
+
+    return result
