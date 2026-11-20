@@ -32,8 +32,13 @@ def api_module(tmp_path_factory):
     }
 
     class FakeDetector:
-        def __init__(self, image_size=160, device=None):
-            pass
+        def __init__(
+            self,
+            image_size=160,
+            device=None,
+            alignment="legacy",
+        ):
+            self.alignment = alignment
 
         def crop(self, image):
             return image

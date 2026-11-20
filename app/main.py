@@ -49,6 +49,40 @@ from facerec.inference import (
 HOST, PORT = "127.0.0.1", 8443
 RUN_DIR = os.environ.get("FACEREC_RUN", "runs/e04_cnn_triplet")
 GALLERY_PATH = os.environ.get("FACEREC_GALLERY", "embeddings/gallery.npz")
+ALIGNMENT = os.environ.get("FACEREC_ALIGNMENT", "legacy").strip().lower()
+
+if ALIGNMENT not in {"legacy", "aligned"}:
+    raise ValueError("FACEREC_ALIGNMENT deve ser legacy ou aligned.")
+
+if ALIGNMENT == "aligned":
+    if not os.environ.get("FACEREC_GALLERY", "").strip():
+        raise ValueError(
+            "Modo aligned exige FACEREC_GALLERY explicita."
+        )
+
+    experimental_root = (
+        ROOT / "embeddings" / "experiments" / "face_alignment"
+    ).resolve()
+
+    gallery_candidate = Path(GALLERY_PATH)
+
+    if not gallery_candidate.is_absolute():
+        gallery_candidate = ROOT / gallery_candidate
+
+    gallery_resolved = gallery_candidate.resolve()
+
+    if (
+        not gallery_resolved.is_relative_to(experimental_root)
+        or gallery_resolved == experimental_root
+        or gallery_resolved.suffix.lower() != ".npz"
+    ):
+        raise ValueError(
+            "Modo aligned exige galeria NPZ dentro do "
+            "diretorio experimental face_alignment."
+        )
+
+    GALLERY_PATH = str(gallery_resolved)
+
 TOKEN = os.environ.get("PORTEIRO_TOKEN", "")
 MAX_IMAGE_CHARS = 4_000_000          # ~3 MB em base64
 MAX_IMAGE_PIXELS = 12_000_000
@@ -58,9 +92,12 @@ model, meta, transform = load_run(RUN_DIR, device)
 THRESHOLD = float(os.environ.get("FACEREC_THRESHOLD", meta["id_threshold"]))   # vem da VALIDAÇÃO (ADR-003)
 detector = FaceDetector(
     image_size=meta["image_size"],
-    device=device
+    device=device,
+    alignment=ALIGNMENT,
 )
 MODEL_ID = run_fingerprint(RUN_DIR)
+if ALIGNMENT == "aligned":
+    MODEL_ID = f"{MODEL_ID}:preprocess=aligned-v1"
 gallery = Gallery.load(
     GALLERY_PATH,
     expected_model_id=MODEL_ID
