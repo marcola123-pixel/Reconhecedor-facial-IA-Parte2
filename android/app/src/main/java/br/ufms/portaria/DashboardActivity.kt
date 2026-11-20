@@ -28,7 +28,9 @@ class DashboardActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.btnSeguranca).setOnClickListener {
             startActivity(Intent(this, SegurancaActivity::class.java))
         }
-        configurarBotao(R.id.btnConfiguracoes, "Configuracoes")
+        findViewById<TextView>(R.id.btnConfiguracoes).setOnClickListener {
+            startActivity(Intent(this, ConfiguracoesActivity::class.java))
+        }
 
         carregarIndicadores()
         solicitarTokenAdministrativo()
