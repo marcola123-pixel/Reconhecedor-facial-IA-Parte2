@@ -109,8 +109,89 @@ class PessoasActivity : AppCompatActivity() {
                         bottomMargin = (12 * resources.displayMetrics.density).toInt()
                     }
 
-                    lista.addView(item, params)
+                    val container = LinearLayout(this).apply {
+                        orientation = LinearLayout.VERTICAL
+                        setBackgroundResource(R.drawable.bg_premium_card)
+                    }
+
+                    item.setBackgroundColor(Color.TRANSPARENT)
+                    container.addView(item)
+
+                    val botaoExcluir = TextView(this).apply {
+                        text = "EXCLUIR CADASTRO"
+                        setTextColor(Color.rgb(248, 113, 113))
+                        textSize = 14f
+                        gravity = Gravity.CENTER
+                        setPadding(24, 16, 24, 24)
+                        setOnClickListener {
+                            confirmarExclusao(pessoa.nome)
+                        }
+                    }
+
+                    container.addView(botaoExcluir)
+                    lista.addView(container, params)
                 }
+            }
+        }
+    }
+
+    private var exclusaoEmAndamento = false
+
+    private fun confirmarExclusao(nome: String) {
+        if (exclusaoEmAndamento) return
+
+        val token = AdminSession.obterToken()
+
+        if (token.isNullOrBlank()) {
+            Toast.makeText(
+                this,
+                "Autenticacao administrativa necessaria.",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Excluir cadastro?")
+            .setMessage(
+                "Deseja excluir definitivamente o cadastro de \"$nome\"?\n\n" +
+                "Os dados biometricos e o historico de reconhecimento " +
+                "associado a esta pessoa serao removidos.\n\n" +
+                "Esta acao nao pode ser desfeita."
+            )
+            .setNegativeButton("CANCELAR", null)
+            .setPositiveButton("EXCLUIR DEFINITIVAMENTE") { _, _ ->
+                executarExclusao(nome, token)
+            }
+            .show()
+    }
+
+    private fun executarExclusao(nome: String, token: String) {
+        if (exclusaoEmAndamento) return
+
+        exclusaoEmAndamento = true
+
+        findViewById<TextView>(R.id.textoTotalPessoas).text =
+            "Excluindo cadastro..."
+
+        PessoasApi().excluir(nome, token) { sucesso, mensagem ->
+
+            runOnUiThread {
+                if (isFinishing || isDestroyed) return@runOnUiThread
+
+                exclusaoEmAndamento = false
+
+                Toast.makeText(
+                    this,
+                    mensagem,
+                    Toast.LENGTH_LONG
+                ).show()
+
+                if (!sucesso && mensagem == "Acesso administrativo negado.") {
+                    AdminSession.desconectar()
+                }
+
+                carregarPessoas()
             }
         }
     }

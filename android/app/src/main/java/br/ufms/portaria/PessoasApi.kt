@@ -1,4 +1,4 @@
-﻿package br.ufms.portaria
+package br.ufms.portaria
 
 import okhttp3.Call
 import okhttp3.Callback
@@ -84,6 +84,84 @@ class PessoasApi {
 
                     } catch (e: Exception) {
                         callback(null, "Resposta invalida do servidor.")
+                    }
+                }
+            }
+        })
+    }
+
+    fun excluir(
+        nome: String,
+        token: String,
+        callback: (Boolean, String) -> Unit
+    ) {
+        if (nome.isBlank() || token.isBlank()) {
+            callback(false, "Nome ou autenticacao invalida.")
+            return
+        }
+
+        val nomeCodificado = java.net.URLEncoder.encode(
+            nome,
+            "UTF-8"
+        ).replace("+", "%20")
+
+        val request = Request.Builder()
+            .url("${Config.SERVER_URL}/pessoas/$nomeCodificado")
+            .header("X-Porteiro-Token", token)
+            .delete()
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+
+            override fun onFailure(call: Call, e: IOException) {
+                callback(
+                    false,
+                    "Falha de conexao. Verifique a lista antes de tentar novamente."
+                )
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                response.use {
+
+                    when (it.code) {
+                        401, 403 -> {
+                            callback(false, "Acesso administrativo negado.")
+                            return
+                        }
+
+                        404 -> {
+                            callback(false, "Pessoa nao encontrada.")
+                            return
+                        }
+                    }
+
+                    if (!it.isSuccessful) {
+                        callback(
+                            false,
+                            "Erro HTTP ${it.code}. Verifique a lista antes de repetir."
+                        )
+                        return
+                    }
+
+                    try {
+                        val json = JSONObject(
+                            it.body?.string().orEmpty()
+                        )
+
+                        if (json.optBoolean("removida", false)) {
+                            callback(true, "Pessoa excluida com sucesso.")
+                        } else {
+                            callback(
+                                false,
+                                "Resposta inesperada. Atualize a lista antes de repetir."
+                            )
+                        }
+
+                    } catch (e: Exception) {
+                        callback(
+                            false,
+                            "Resposta invalida. Atualize a lista antes de repetir."
+                        )
                     }
                 }
             }
