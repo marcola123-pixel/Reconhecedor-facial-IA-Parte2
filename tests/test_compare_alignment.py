@@ -330,3 +330,108 @@ def test_paired_identification_requires_unknown_probes():
             probe_indices=[1, 3],
             threshold=0.5,
         )
+
+
+
+def test_validate_embedding_map_normalizes():
+    import numpy as np
+    from compare_alignment import validate_embedding_map
+
+    result = validate_embedding_map({
+        "indices": np.array([2, 5]),
+        "embeddings": np.array([[3.0, 4.0], [0.0, 2.0]]),
+    }, expected_dim=2)
+
+    np.testing.assert_allclose(result[2], [0.6, 0.8])
+    np.testing.assert_allclose(result[5], [0.0, 1.0])
+
+
+def test_validate_embedding_map_rejects_nan():
+    import numpy as np
+    import pytest
+    from compare_alignment import validate_embedding_map
+
+    with pytest.raises(ValueError, match="nao finitos"):
+        validate_embedding_map({
+            "indices": np.array([0]),
+            "embeddings": np.array([[float("nan"), 1.0]]),
+        })
+
+
+def test_validate_embedding_map_rejects_duplicates():
+    import numpy as np
+    import pytest
+    from compare_alignment import validate_embedding_map
+
+    with pytest.raises(ValueError, match="duplicados"):
+        validate_embedding_map({
+            "indices": np.array([0, 0]),
+            "embeddings": np.array([[1.0, 0.0], [0.0, 1.0]]),
+        })
+
+
+def test_validate_embedding_map_rejects_wrong_dimension():
+    import numpy as np
+    import pytest
+    from compare_alignment import validate_embedding_map
+
+    with pytest.raises(ValueError, match="Dimensao"):
+        validate_embedding_map({
+            "indices": np.array([0]),
+            "embeddings": np.array([[1.0, 0.0]]),
+        }, expected_dim=512)
+
+
+
+def test_identification_rejects_nan_embedding():
+    import numpy as np
+    import pytest
+
+    embedded, labels = _synthetic_identification_data()
+
+    embedded["aligned"]["embeddings"][1, 0] = np.nan
+
+    with pytest.raises(ValueError, match="nao finitos"):
+        evaluate_paired_identification(
+            embedded,
+            labels,
+            enroll_indices={"alice": [0], "bob": [2]},
+            probe_indices=[1, 3, 4],
+            threshold=0.5,
+        )
+
+
+def test_identification_normalizes_embeddings():
+    embedded, labels = _synthetic_identification_data()
+
+    for mode in ("legacy", "aligned"):
+        embedded[mode]["embeddings"] *= 5.0
+
+    result = evaluate_paired_identification(
+        embedded,
+        labels,
+        enroll_indices={"alice": [0], "bob": [2]},
+        probe_indices=[1, 3, 4],
+        threshold=0.5,
+    )
+
+    assert result["modes"]["legacy"]["dir"] == 1.0
+    assert result["modes"]["aligned"]["dir"] == 1.0
+
+
+def test_identification_rejects_inconsistent_dimensions():
+    import numpy as np
+    import pytest
+
+    embedded, labels = _synthetic_identification_data()
+
+    embedded["aligned"]["embeddings"] = np.ones((5, 3))
+
+    with pytest.raises(ValueError, match="Dimensoes"):
+        evaluate_paired_identification(
+            embedded,
+            labels,
+            enroll_indices={"alice": [0], "bob": [2]},
+            probe_indices=[1, 3, 4],
+            threshold=0.5,
+        )

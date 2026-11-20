@@ -298,19 +298,23 @@ def evaluate_paired_identification(
         if any(labels[i] != name for i in indices):
             raise ValueError("Identidade de cadastro inconsistente.")
 
-    maps = {}
+    maps = {
+        mode: validate_embedding_map(embedded[mode])
+        for mode in ("legacy", "aligned")
+    }
 
-    for mode in ("legacy", "aligned"):
-        indices = np.asarray(embedded[mode]["indices"], dtype=np.int64)
-        vectors = np.asarray(embedded[mode]["embeddings"])
+    dimensions = {
+        vector.shape[0]
+        for mode_map in maps.values()
+        for vector in mode_map.values()
+    }
 
-        if len(indices) != len(vectors):
-            raise ValueError("Indices e embeddings inconsistentes.")
+    if len(dimensions) > 1:
+        raise ValueError("Dimensoes de embeddings inconsistentes.")
 
-        if len(set(indices.tolist())) != len(indices):
-            raise ValueError("Indices de embeddings duplicados.")
-
-        maps[mode] = dict(zip(indices.tolist(), vectors))
+    if any(index >= len(labels) for mode_map in maps.values()
+           for index in mode_map):
+        raise ValueError("Indice de embedding fora do dataset.")
 
     common = set(maps["legacy"]) & set(maps["aligned"])
 
@@ -379,3 +383,54 @@ def evaluate_paired_identification(
         )
 
     return result
+
+
+
+def validate_embedding_map(data, expected_dim=None):
+    """Valida indices e embeddings e normaliza os vetores em L2."""
+    import numpy as np
+
+    indices = np.asarray(data["indices"])
+    vectors = np.asarray(data["embeddings"], dtype=np.float64)
+
+    if indices.ndim != 1:
+        raise ValueError("Indices devem ser unidimensionais.")
+
+    if indices.dtype.kind not in "iu":
+        raise ValueError("Indices devem ser inteiros.")
+
+    if vectors.ndim != 2:
+        raise ValueError("Embeddings devem ser bidimensionais.")
+
+    if len(indices) != len(vectors):
+        raise ValueError("Quantidade de indices e embeddings diferente.")
+
+    if len(np.unique(indices)) != len(indices):
+        raise ValueError("Indices duplicados.")
+
+    if np.any(indices < 0):
+        raise ValueError("Indices negativos.")
+
+    if expected_dim is not None and vectors.shape[1] != expected_dim:
+        raise ValueError("Dimensao de embedding inesperada.")
+
+    if vectors.shape[0] == 0:
+        return {}
+
+    if vectors.shape[1] == 0:
+        raise ValueError("Embeddings sem dimensoes.")
+
+    if not np.all(np.isfinite(vectors)):
+        raise ValueError("Embeddings nao finitos.")
+
+    norms = np.linalg.norm(vectors, axis=1, keepdims=True)
+
+    if np.any(~np.isfinite(norms)) or np.any(norms <= 1e-12):
+        raise ValueError("Norma de embedding invalida.")
+
+    vectors = vectors / norms
+
+    return {
+        int(index): vector
+        for index, vector in zip(indices, vectors)
+    }
