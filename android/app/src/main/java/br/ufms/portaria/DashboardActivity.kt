@@ -22,7 +22,9 @@ class DashboardActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.btnPessoas).setOnClickListener {
             startActivity(Intent(this, PessoasActivity::class.java))
         }
-        configurarBotao(R.id.btnHistorico, "Historico")
+        findViewById<TextView>(R.id.btnHistorico).setOnClickListener {
+            startActivity(Intent(this, HistoricoActivity::class.java))
+        }
         configurarBotao(R.id.btnSeguranca, "Seguranca")
         configurarBotao(R.id.btnConfiguracoes, "Configuracoes")
 
