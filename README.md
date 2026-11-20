@@ -1,11 +1,46 @@
-# Reconhecedor Facial 1:N com aprendizado de representação
+# Next Face Premium — Reconhecimento Facial 1:N (Parte 2)
 
-Trabalho 1 de Inteligência Artificial (UFMS). Pipeline: **imagem → detecção (MTCNN) → recorte → rede neural → embedding → comparação → reconhecido / desconhecido**.
+**UNIVERSIDADE FEDERAL DE MATO GROSSO DO SUL (UFMS)**
+**FACULDADE DE COMPUTAÇÃO (FACOM)**
+**DISCIPLINA: INTELIGÊNCIA ARTIFICIAL (2026)**
+**PROFESSOR: EDSON TAKASHI MATSUBARA**
+**TRABALHO: RECONHECIMENTO FACIAL 1:N — PARTE 2**
+
+### Autor
+
+**Marcos Vinicius Moreira Cairo**
+**RGA:** 202419040675
+**E-mail:** marcos.cairo@ufms.br
+
+### Vídeo de demonstração
+
+**Link:** *A adicionar após a gravação do vídeo de demonstração.*
+
+### Visão geral
+
+O **Next Face Premium** é uma aplicação acadêmica de controle de acesso por reconhecimento facial 1:N, com interface web responsiva, API FastAPI e cliente Android. O fluxo principal é **imagem → detecção (MTCNN) → recorte → embedding → similaridade de cosseno → autorizado/desconhecido**. O sistema contempla cadastro e exclusão de pessoas, histórico, auditoria administrativa e controles de privacidade.
+
+### Atividades desenvolvidas
+
+| Atividade | Status | Descrição |
+|---|---|---|
+| A1 — Detecção facial | Concluída | Detecção com MTCNN e validação de imagens e múltiplos rostos. |
+| A2 — Reconhecimento 1:N | Concluída | Embeddings de 512 dimensões, protótipos por identidade e comparação por cosseno com limiar de validação. |
+| A3 — Cadastro e exclusão | Concluída | Cadastro com pelo menos três imagens faciais válidas, prevenção de duplicados e remoção. |
+| A4 — Interface web | Concluída | Dashboard, reconhecimento, pessoas, histórico, segurança e configurações. |
+| A5 — Cliente Android | Implementada e testada | Aplicativo Android integrado à API local via HTTPS; APK de desenvolvimento. |
+| A6 — Histórico e auditoria | Concluída | Persistência local de eventos em SQLite. |
+| A7 — Segurança e privacidade | Implementada | Autenticação por token, validação de entrada, limites de requisição, auditoria e verificações de privacidade. |
+| A8 — Validação automatizada | Concluída | 95 testes aprovados na última execução informada. |
+
+---
+
+Base experimental da Parte 1, estendida na Parte 2. Pipeline: **imagem → detecção (MTCNN) → recorte → rede neural → embedding → comparação → reconhecido /desconhecido**.
 
 Cada pessoa é uma região no espaço de embeddings; **cadastrar alguém novo não exige retreinar** (basta guardar o protótipo das fotos).
 O que se investiga na Parte 1 é *qual rede e qual função de perda* produzem os embeddings que melhor separam pessoas **nunca vistas** no treino.
 
-> **Estado atual:** código, specs, ADRs e testes prontos. **Experimentos E01 a E07 executados; modelo E07 selecionado; aplicacao Next Face Premium e cliente Android implementados; 89 testes automatizados aprovados** — a tabela de resultados abaixo é preenchida automaticamente por `scripts/aggregate_results.py` a partir dos JSONs em `experiments/results/`.
+> **Estado atual:** código, specs, ADRs e testes prontos. **Experimentos E01 a E07 executados; modelo E07 selecionado; aplicação Next Face Premium e cliente Android implementados; 95 testes automatizados aprovados** — a tabela de resultados abaixo é preenchida automaticamente por `scripts/aggregate_results.py` a partir dos JSONs em `experiments/results/`.
 
 ## Estrutura
 
@@ -156,8 +191,7 @@ $env:FACEREC_GALLERY = "embeddings/gallery_e07_v2.npz"
 $env:PORTEIRO_TOKEN = python -c "import secrets; print(secrets.token_urlsafe(32))"
 ~~~
 
-O valor de PORTEIRO_TOKEN acima e apenas um exemplo.
-Substitua-o por uma credencial forte e mantenha-a em segredo.
+O comando gera uma credencial aleatória para a sessão atual do PowerShell. Não publique seu valor; configure uma nova credencial forte em cada ambiente.
 
 Inicie o servidor:
 
@@ -168,14 +202,14 @@ python -m app.main
 Acesse https://127.0.0.1:8443 no navegador.
 
 O modelo precisa estar disponível em
-runs/e07_facenet_full/best.pt, acompanhado de meta.json.
+`runs/e07_facenet_full/best.pt`, acompanhado de `meta.json`. **Os pesos não estão no GitHub**: para reproduzir a inferência, é necessário obter ou treinar o checkpoint correspondente. Galerias e certificados locais também não são distribuídos.
 
 ### Endpoints da API
 
 | Metodo | Rota | Finalidade |
 |---|---|---|
 | GET | / | Interface web |
-| GET | /status | Estado da aplicacao |
+| GET | /status | Estado da aplicação |
 | POST | /reconhecer | Reconhecimento facial |
 | GET | /pessoas | Listagem administrativa |
 | POST | /pessoas | Cadastro de pessoas |
@@ -233,10 +267,10 @@ uma distribuição publica de producao.
 
 ### Testes automatizados
 
-A última execução completa informada apresentou:
+A última execução completa informada, antes da publicação inicial da Parte 2, apresentou:
 
 ~~~text
-89 passed in 8.61s
+95 passed in 7.05s
 ~~~
 
 A suite cobre API, autenticação, reconhecimento, cadastro,
@@ -257,4 +291,4 @@ Fotos, nomes, embeddings, galeria, checkpoints e termos de consentimento **não*
 
 ## Spec-Driven Development e uso de IA
 
-Requisitos → especificação → critérios de aceitação → implementação → testes, em `docs/specs/` e `docs/decisions/`. O código foi desenvolvido com assistência de IA (Claude) a partir dessas especificações; os integrantes são responsáveis por compreender e explicar arquitetura, losses, treino, métricas e decisões. Nenhuma foto, embedding ou checkpoint privado foi/deve ser enviado a assistentes de IA.
+Requisitos → especificação → critérios de aceitação → implementação → testes, em `docs/specs/` e `docs/decisions/`. O código foi desenvolvido com assistência de IA (Claude) a partir dessas especificações; o autor é responsável por compreender e explicar arquitetura, losses, treino, métricas e decisões. Nenhuma foto, embedding ou checkpoint privado foi/deve ser enviado a assistentes de IA.
