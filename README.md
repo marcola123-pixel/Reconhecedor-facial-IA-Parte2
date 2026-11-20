@@ -246,24 +246,128 @@ O rate limiting possui configuração por variaveis de ambiente.
 A ativacao e os limites efetivos dependem da configuração
 do servidor.
 
-### Aplicativo Android
+### Aplicativo Android - Next Face Premium
 
-O projeto inclui um aplicativo Android que utiliza o backend
-FastAPI para realizar reconhecimento facial.
+Além da interface web, o projeto possui um aplicativo Android nativo,
+desenvolvido em Kotlin e integrado ao backend FastAPI.
 
-O APK de desenvolvimento fica em:
+O aplicativo foi testado em um dispositivo Android físico, utilizando
+a câmera para capturar imagens e enviar quadros ao servidor.
 
-android/app/build/outputs/apk/debug/app-debug.apk
+#### Arquitetura Android
 
-Durante os testes com dispositivo conectado por USB,
-foi utilizado o encaminhamento da porta 8443:
+```text
+Câmera do smartphone
+        |
+        v
+CameraX - captura de quadros
+        |
+        v
+OkHttp - requisição HTTPS
+        |
+        v
+FastAPI - POST /reconhecer
+        |
+        v
+MTCNN - detecção e recorte facial
+        |
+        v
+FaceNet E07 - embedding de 512 dimensões
+        |
+        v
+Similaridade de cosseno + threshold
+        |
+        v
+Reconhecido / desconhecido
+        |
+        v
+Resultado apresentado no Android
+```
+
+O reconhecimento facial é processado pelo servidor, e não
+diretamente pelo dispositivo móvel.
+
+#### Tecnologias
+
+| Tecnologia | Finalidade |
+|---|---|
+| Kotlin | Desenvolvimento do aplicativo Android |
+| CameraX | Captura de imagens da câmera |
+| OkHttp | Comunicação com a API FastAPI |
+| HTTPS | Comunicação criptografada |
+| FastAPI | Backend de reconhecimento |
+| MTCNN | Detecção e recorte facial |
+| FaceNet E07 | Extração de embeddings de 512 dimensões |
+
+#### Configuração do aplicativo
+
+O código-fonte Android está no diretório `android/`.
+
+A configuração de comunicação está em:
+
+`android/app/src/main/java/br/ufms/portaria/Config.kt`
+
+```kotlin
+const val SERVER_URL = "https://localhost:8443"
+const val INTERVALO_MS = 800L
+```
+
+O intervalo de 800 ms define a frequência de envio dos quadros
+para reconhecimento.
+
+#### Execução com dispositivo físico
+
+1. Iniciar o backend FastAPI com o modelo E07 disponível.
+2. Conectar o smartphone ao computador por USB.
+3. Habilitar a depuração USB no Android.
+4. Confirmar que o dispositivo aparece no ADB.
+5. Configurar o encaminhamento da porta HTTPS.
 
 ```powershell
+adb devices
 adb reverse tcp:8443 tcp:8443
 ```
 
-O APK e uma versão de desenvolvimento e não representa
-uma distribuição publica de producao.
+Com o encaminhamento ativo, o endereço `https://localhost:8443`
+utilizado pelo aplicativo aponta para o servidor executado
+no computador.
+
+A configuração de desenvolvimento utiliza certificado TLS local,
+incluído na configuração de confiança do aplicativo Android.
+Caso o certificado do servidor seja substituído, a configuração
+do aplicativo deverá ser atualizada e o APK recompilado.
+
+#### Compilação e APK
+
+O projeto Android pode ser aberto no Android Studio.
+
+Para gerar um APK de desenvolvimento, utilize a tarefa Gradle
+`assembleDebug`, pelo Android Studio ou pelo Gradle Wrapper
+do projeto.
+
+O APK gerado fica em:
+
+`android/app/build/outputs/apk/debug/app-debug.apk`
+
+O APK é um artefato de desenvolvimento e não representa uma
+distribuição pública de produção.
+
+#### Validação do Android
+
+A aplicação foi testada em um smartphone físico, com captura
+de imagens pela câmera, comunicação com a API local e
+reconhecimento facial funcional.
+
+O aplicativo demonstra a reutilização do mesmo backend
+de Inteligência Artificial por interfaces web e mobile.
+
+#### Limitações do Android
+
+- O aplicativo depende do backend FastAPI em execução.
+- O reconhecimento facial não é realizado localmente no smartphone.
+- A configuração testada utiliza USB e encaminhamento de porta ADB.
+- O certificado TLS é destinado ao ambiente local de desenvolvimento.
+- O APK não foi preparado para distribuição pública em produção.
 
 ### Testes automatizados
 
@@ -285,6 +389,44 @@ python -m pytest tests -v --tb=short
 A aprovação dos testes automatizados deve ser complementada
 por verificações manuais no navegador e no Android.
 
+
+### Validação funcional manual
+
+A aplicação web foi testada localmente com o modelo
+`e07_facenet_full`, inicialmente com zero pessoas cadastradas.
+
+Foram verificados:
+
+1. Autenticação administrativa com token.
+2. Cadastro com três imagens faciais válidas.
+3. Reconhecimento autorizado de pessoa cadastrada.
+4. Tratamento de imagem sem rosto.
+5. Exclusão do cadastro pela interface.
+6. Retorno do dashboard a zero pessoas cadastradas.
+
+A câmera do navegador também foi testada com sucesso.
+
+A suíte automatizada foi executada com `python -m pytest -q`,
+com resultado de **95 testes aprovados**.
+
+### Limitações e reprodutibilidade
+
+- O sistema utiliza MTCNN para detecção e recorte facial.
+  Não foi implementado alinhamento geométrico explícito
+  por landmarks; essa etapa permanece como melhoria futura.
+- A inferência com o E07 requer `best.pt` e `meta.json`
+  compatíveis em `runs/e07_facenet_full/`.
+- Os pesos do modelo não são distribuídos pelo
+  repositório. Para reproduzir a inferência, é
+  necessário obter legitimamente o checkpoint correspondente
+  ou executar o treinamento documentado.
+- O desempenho pode variar conforme iluminação,
+  pose, qualidade da imagem e condições de captura.
+- O aplicativo Android depende de um servidor FastAPI ativo.
+- O ambiente demonstrado utiliza HTTPS local com certificado
+  de desenvolvimento e não representa uma implantação
+  de produção.
+
 ## Privacidade (LGPD) — critério eliminatório
 
 Fotos, nomes, embeddings, galeria, checkpoints e termos de consentimento **não** vão para o Git (`.gitignore`). Modelos são treinados **só com dataset público**. Dados privados são processados localmente, aparecem apenas em métricas agregadas e são apagados ao fim da disciplina. Detalhes: [`docs/specs/007-privacy-lgpd.md`](docs/specs/007-privacy-lgpd.md).
@@ -292,3 +434,34 @@ Fotos, nomes, embeddings, galeria, checkpoints e termos de consentimento **não*
 ## Spec-Driven Development e uso de IA
 
 Requisitos → especificação → critérios de aceitação → implementação → testes, em `docs/specs/` e `docs/decisions/`. O código foi desenvolvido com assistência de IA (Claude) a partir dessas especificações; o autor é responsável por compreender e explicar arquitetura, losses, treino, métricas e decisões. Nenhuma foto, embedding ou checkpoint privado foi/deve ser enviado a assistentes de IA.
+
+### Inicialização com galeria vazia
+
+A aplicação foi validada utilizando o experimento `e07_facenet_full`, com embeddings de 512 dimensões e limiar de identificação `0.5838396380334074`.
+
+O checkpoint e os metadados devem estar disponíveis localmente em `runs/e07_facenet_full/`. Esses arquivos não são distribuídos pelo repositório.
+
+Para executar a aplicação no Windows, configure as variáveis de ambiente no PowerShell:
+
+```powershell
+$env:FACEREC_RUN = "runs/e07_facenet_full"
+$env:FACEREC_GALLERY = "embeddings/gallery_entrega_teste.npz"
+$env:PORTEIRO_TOKEN = python -c "import secrets; print(secrets.token_urlsafe(32))"
+python -m app.main
+```
+
+O certificado TLS deve ter sido gerado previamente por `scripts/gerar_certificado.py`.
+
+A aplicação pode ser iniciada com uma galeria local vazia, sem fotografias ou embeddings de participantes.
+
+Para verificar a inicialização:
+
+```powershell
+curl.exe -k https://127.0.0.1:8443/status
+```
+
+Em uma galeria nova, o endpoint retorna `pessoas_cadastradas: 0`.
+
+A partir desse estado, o administrador pode cadastrar novas pessoas utilizando imagens fornecidas com consentimento, sem necessidade de retreinar o modelo.
+
+**Observação:** o parâmetro `-k` desabilita a verificação do certificado exclusivamente para testes locais com certificado autoassinado. Não deve ser utilizado como prática de segurança em produção.
