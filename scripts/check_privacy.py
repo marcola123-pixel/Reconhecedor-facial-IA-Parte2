@@ -27,6 +27,13 @@ FORBIDDEN = [
     (r"(termo|consentimento).*\.(pdf|docx?|png|jpe?g)$", "termo de consentimento"),
 ]
 PNG_OK = ("docs/", "experiments/results/figures/")
+
+ANDROID_ICON_RE = re.compile(
+    r"^android/app/src/main/res/"
+    r"mipmap-(?:mdpi|hdpi|xhdpi|xxhdpi|xxxhdpi)/"
+    r"ic_launcher(?:_foreground|_round)?\.png$",
+    re.I,
+)
 TEXT_SUFFIX = {".py", ".js", ".md", ".yaml", ".yml", ".txt", ".json", ".toml", ".cfg", ".html", ".sh"}
 SECRET_RE = re.compile(r"(token|secret|api[_-]?key|passw(or)?d)\s*[:=]\s*['\"][^'\"\s]{12,}['\"]", re.I)
 
@@ -40,9 +47,9 @@ def _bad(path: str):
     for pattern, why in FORBIDDEN:
         if re.search(pattern, path, re.I):
             return why
-    if path.lower().endswith(".png") and not path.startswith(PNG_OK):
-        return "imagem fora de docs/ e de experiments/results/figures/"
-    return None
+    if path.lower().endswith(".png"):
+        if not path.startswith(PNG_OK) and not ANDROID_ICON_RE.fullmatch(path):
+            return "imagem PNG fora dos locais permitidos"
 
 
 def scan(repo) -> Dict[str, List[str]]:
