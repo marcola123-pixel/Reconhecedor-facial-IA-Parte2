@@ -19,7 +19,9 @@ class DashboardActivity : AppCompatActivity() {
             startActivity(Intent(this, MainActivity::class.java))
         }
 
-        configurarBotao(R.id.btnPessoas, "Pessoas")
+        findViewById<TextView>(R.id.btnPessoas).setOnClickListener {
+            startActivity(Intent(this, PessoasActivity::class.java))
+        }
         configurarBotao(R.id.btnHistorico, "Historico")
         configurarBotao(R.id.btnSeguranca, "Seguranca")
         configurarBotao(R.id.btnConfiguracoes, "Configuracoes")
@@ -90,6 +92,9 @@ class DashboardActivity : AppCompatActivity() {
                     ).show()
                     return@runOnUiThread
                 }
+                AdminSession.conectar(token)
+
+
 
                 findViewById<TextView>(
                     R.id.valorReconhecimentos
