@@ -8,7 +8,7 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from compare_alignment import (compare_detectors, evaluate_detector, collect_paired_faces, embed_paired_faces)
+from compare_alignment import (compare_detectors, evaluate_detector, collect_paired_faces, embed_paired_faces, evaluate_paired_identification)
 from facerec.detection import MultipleFacesError
 
 
@@ -228,4 +228,105 @@ def test_embed_paired_faces_rejects_invalid_batch_size():
     with pytest.raises(ValueError):
         embed_paired_faces(
             object(), None, [], batch_size=0
+        )
+
+
+
+def _synthetic_identification_data():
+    import numpy as np
+
+    labels = ["alice", "alice", "bob", "bob", "unknown"]
+
+    vectors = np.array([
+        [1.0, 0.0],
+        [0.99, 0.10],
+        [0.0, 1.0],
+        [0.10, 0.99],
+        [-1.0, 0.0],
+    ])
+
+    vectors = vectors / np.linalg.norm(
+        vectors, axis=1, keepdims=True
+    )
+
+    embedded = {
+        mode: {
+            "indices": np.arange(5),
+            "embeddings": vectors.copy(),
+        }
+        for mode in ("legacy", "aligned")
+    }
+
+    return embedded, labels
+
+
+def test_paired_identification_success():
+    embedded, labels = _synthetic_identification_data()
+
+    result = evaluate_paired_identification(
+        embedded,
+        labels,
+        enroll_indices={"alice": [0], "bob": [2]},
+        probe_indices=[1, 3, 4],
+        threshold=0.5,
+    )
+
+    assert result["n_common_probes"] == 3
+
+    for mode in ("legacy", "aligned"):
+        metrics = result["modes"][mode]
+        assert metrics["dir"] == 1.0
+        assert metrics["far_unknown"] == 0.0
+
+
+def test_paired_identification_excludes_unpaired_probe():
+    embedded, labels = _synthetic_identification_data()
+
+    embedded["aligned"]["indices"] = embedded[
+        "aligned"
+    ]["indices"][[0, 2, 3, 4]]
+
+    embedded["aligned"]["embeddings"] = embedded[
+        "aligned"
+    ]["embeddings"][[0, 2, 3, 4]]
+
+    result = evaluate_paired_identification(
+        embedded,
+        labels,
+        enroll_indices={"alice": [0], "bob": [2]},
+        probe_indices=[1, 3, 4],
+        threshold=0.5,
+    )
+
+    assert result["n_common_probes"] == 2
+    assert result["n_excluded_probes"] == 1
+
+
+def test_paired_identification_rejects_data_leakage():
+    import pytest
+
+    embedded, labels = _synthetic_identification_data()
+
+    with pytest.raises(ValueError, match="compartilhar"):
+        evaluate_paired_identification(
+            embedded,
+            labels,
+            enroll_indices={"alice": [0], "bob": [2]},
+            probe_indices=[0, 3, 4],
+            threshold=0.5,
+        )
+
+
+def test_paired_identification_requires_unknown_probes():
+    import pytest
+
+    embedded, labels = _synthetic_identification_data()
+
+    with pytest.raises(ValueError, match="desconhecidos"):
+        evaluate_paired_identification(
+            embedded,
+            labels,
+            enroll_indices={"alice": [0], "bob": [2]},
+            probe_indices=[1, 3],
+            threshold=0.5,
         )

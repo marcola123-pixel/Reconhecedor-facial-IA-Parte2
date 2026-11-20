@@ -241,3 +241,141 @@ def embed_paired_faces(
         }
 
     return output
+
+
+
+def evaluate_paired_identification(
+    embedded,
+    labels,
+    enroll_indices,
+    probe_indices,
+    threshold,
+):
+    """Compara identificacao 1:N sobre indices validos nos dois modos.
+
+    enroll_indices: dict {identidade: [indices de cadastro]}
+    probe_indices: indices de teste, sem sobreposicao com cadastro
+    labels: identidade original de cada imagem
+    """
+    import numpy as np
+    from facerec.metrics import open_set_identification
+
+    labels = np.asarray(labels)
+    threshold = float(threshold)
+
+    if not np.isfinite(threshold):
+        raise ValueError("Threshold deve ser finito.")
+
+    if not enroll_indices:
+        raise ValueError("Nenhuma identidade cadastrada.")
+
+    enroll = {
+        name: [int(i) for i in indices]
+        for name, indices in enroll_indices.items()
+    }
+    probes = [int(i) for i in probe_indices]
+
+    all_enroll = [i for indices in enroll.values() for i in indices]
+
+    if not all_enroll or any(not indices for indices in enroll.values()):
+        raise ValueError("Cada identidade precisa de imagens de cadastro.")
+
+    if len(all_enroll) != len(set(all_enroll)):
+        raise ValueError("Indices de cadastro duplicados.")
+
+    if len(probes) != len(set(probes)):
+        raise ValueError("Indices de teste duplicados.")
+
+    if set(all_enroll) & set(probes):
+        raise ValueError("Cadastro e teste nao podem compartilhar imagens.")
+
+    selected = set(all_enroll) | set(probes)
+
+    if any(i < 0 or i >= len(labels) for i in selected):
+        raise ValueError("Indice fora do dataset.")
+
+    for name, indices in enroll.items():
+        if any(labels[i] != name for i in indices):
+            raise ValueError("Identidade de cadastro inconsistente.")
+
+    maps = {}
+
+    for mode in ("legacy", "aligned"):
+        indices = np.asarray(embedded[mode]["indices"], dtype=np.int64)
+        vectors = np.asarray(embedded[mode]["embeddings"])
+
+        if len(indices) != len(vectors):
+            raise ValueError("Indices e embeddings inconsistentes.")
+
+        if len(set(indices.tolist())) != len(indices):
+            raise ValueError("Indices de embeddings duplicados.")
+
+        maps[mode] = dict(zip(indices.tolist(), vectors))
+
+    common = set(maps["legacy"]) & set(maps["aligned"])
+
+    if not set(all_enroll).issubset(common):
+        raise ValueError(
+            "Nem todas as imagens de cadastro possuem embeddings pareados."
+        )
+
+    common_probes = [i for i in probes if i in common]
+
+    if not common_probes:
+        raise ValueError("Nenhuma imagem de teste valida nos dois modos.")
+
+    known_names = set(enroll)
+
+    probe_labels = labels[common_probes]
+    probe_known = np.asarray(
+        [label in known_names for label in probe_labels],
+        dtype=bool,
+    )
+
+    if not probe_known.any() or probe_known.all():
+        raise ValueError(
+            "Avaliacao exige probes conhecidos e desconhecidos."
+        )
+
+    result = {
+        "threshold": threshold,
+        "n_common_probes": len(common_probes),
+        "n_excluded_probes": len(probes) - len(common_probes),
+        "modes": {},
+    }
+
+    for mode in ("legacy", "aligned"):
+        vectors = maps[mode]
+        names = sorted(enroll)
+
+        prototypes = []
+
+        for name in names:
+            prototype = np.mean(
+                [vectors[i] for i in enroll[name]],
+                axis=0,
+            )
+
+            norm = np.linalg.norm(prototype)
+
+            if not np.isfinite(norm) or norm <= 1e-12:
+                raise ValueError("Prototipo invalido.")
+
+            prototypes.append(prototype / norm)
+
+        proto_matrix = np.stack(prototypes)
+
+        probe_matrix = np.stack(
+            [vectors[i] for i in common_probes]
+        )
+
+        result["modes"][mode] = open_set_identification(
+            probe_matrix,
+            probe_labels,
+            probe_known,
+            proto_matrix,
+            names,
+            threshold,
+        )
+
+    return result
