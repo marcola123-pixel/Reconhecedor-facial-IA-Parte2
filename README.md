@@ -31,7 +31,7 @@ O **Next Face Premium** é uma aplicação acadêmica de controle de acesso por 
 | A5 — Cliente Android | Implementada e testada | Aplicativo Android integrado à API local via HTTPS; APK de desenvolvimento. |
 | A6 — Histórico e auditoria | Concluída | Persistência local de eventos em SQLite. |
 | A7 — Segurança e privacidade | Implementada | Autenticação por token, validação de entrada, limites de requisição, auditoria e verificações de privacidade. |
-| A8 — Validação automatizada | Concluída | 95 testes aprovados na última execução informada. |
+| A8 — Validação automatizada | Concluída | 155 testes aprovados na última execução informada. |
 
 ---
 
@@ -40,7 +40,7 @@ Base experimental da Parte 1, estendida na Parte 2. Pipeline: **imagem → detec
 Cada pessoa é uma região no espaço de embeddings; **cadastrar alguém novo não exige retreinar** (basta guardar o protótipo das fotos).
 O que se investiga na Parte 1 é *qual rede e qual função de perda* produzem os embeddings que melhor separam pessoas **nunca vistas** no treino.
 
-> **Estado atual:** código, specs, ADRs e testes prontos. **Experimentos E01 a E07 executados; modelo E07 selecionado; aplicação Next Face Premium e cliente Android implementados; 95 testes automatizados aprovados** — a tabela de resultados abaixo é preenchida automaticamente por `scripts/aggregate_results.py` a partir dos JSONs em `experiments/results/`.
+> **Estado atual:** código, specs, ADRs e testes prontos. **Experimentos E01 a E07 executados; modelo E07 selecionado; aplicação Next Face Premium e cliente Android implementados; 155 testes automatizados aprovados** — a tabela de resultados abaixo é preenchida automaticamente por `scripts/aggregate_results.py` a partir dos JSONs em `experiments/results/`.
 
 ## Estrutura
 
