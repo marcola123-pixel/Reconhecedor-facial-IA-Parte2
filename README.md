@@ -31,16 +31,13 @@ O **Next Face Premium** é uma aplicação acadêmica de controle de acesso por 
 | A5 — Cliente Android | Implementada e testada | Aplicativo Android integrado à API local via HTTPS; APK de desenvolvimento. |
 | A6 — Histórico e auditoria | Concluída | Persistência local de eventos em SQLite. |
 | A7 — Segurança e privacidade | Implementada | Autenticação por token, validação de entrada, limites de requisição, auditoria e verificações de privacidade. |
-| A8 — Validação automatizada | Concluída | 155 testes aprovados na última execução informada. |
+| A8 — Validação automatizada | Concluída | 155 testes aprovados na última execução documentada. |
 
 ---
 
-Base experimental da Parte 1, estendida na Parte 2. Pipeline: **imagem → detecção (MTCNN) → recorte → rede neural → embedding → comparação → reconhecido /desconhecido**.
+A Parte 1 investigou modelos e funções de perda para separar identidades não vistas durante o treinamento; a Parte 2 aplica o experimento E07 em um sistema de controle de acesso. Novas pessoas podem ser cadastradas sem retreinar o modelo.
 
-Cada pessoa é uma região no espaço de embeddings; **cadastrar alguém novo não exige retreinar** (basta guardar o protótipo das fotos).
-O que se investiga na Parte 1 é *qual rede e qual função de perda* produzem os embeddings que melhor separam pessoas **nunca vistas** no treino.
-
-> **Estado atual:** código, specs, ADRs e testes prontos. **Experimentos E01 a E07 executados; modelo E07 selecionado; aplicação Next Face Premium e cliente Android implementados; 155 testes automatizados aprovados** — a tabela de resultados abaixo é preenchida automaticamente por `scripts/aggregate_results.py` a partir dos JSONs em `experiments/results/`.
+A tabela experimental é atualizada por `scripts/aggregate_results.py` a partir dos JSONs em `experiments/results/`.
 
 ## Estrutura
 
@@ -56,14 +53,6 @@ experiments/results/     resultados AGREGADOS (JSON + gráficos) — sem dados i
 data/README.md           como obter os datasets (nenhum dado é versionado)
 ```
 
-## Instalação
-
-```bash
-python -m venv venv && .\venv\Scripts\Activate.ps1      # Windows: venv\Scripts\activate
-pip install -r requirements.txt                      # se o pip reclamar de versões: pip install --no-deps facenet-pytorch
-pip install -e .
-pytest                                               # testes
-```
 
 ## Dados
 
@@ -120,16 +109,6 @@ O experimento **E07**, baseado em InceptionResnetV1 com
 fine-tuning completo e triplet loss, foi selecionado para
 a aplicação de reconhecimento facial 1:N.
 
-Resultados do E07:
-
-- AUC: 0.991
-- EER: 0.021
-- Accuracy: 0.976
-- F1: 0.976
-- DIR: 0.923
-- FAR de desconhecidos: 0.017
-- Melhor época: 3
-
 O E07 apresentou o menor EER e a menor FAR de desconhecidos
 entre os experimentos E01, E06 e E07.
 
@@ -139,34 +118,29 @@ Portanto, o E07 não foi superior em todas as métricas.
 A escolha priorizou a redução de falsas aceitações,
 importante em sistemas de controle de acesso.
 
-A aplicação utiliza embeddings de 512 dimensoes e limiar
+A aplicação utiliza embeddings de 512 dimensões e limiar
 de identificação definido durante a validação.
 
 Limitações: iluminação, pose, qualidade da câmera,
-erros de detecção e possível sobreposicao de identidades
+erros de detecção e possível sobreposição de identidades
 entre dados de pré-treinamento e teste.
 
-## Parte 2 - Next Face Premium
+## Parte 2 — Next Face Premium
 
-O Next Face Premium e uma aplicação de reconhecimento facial 1:N
-desenvolvida com FastAPI, HTTPS e interface web responsiva.
-
-O modelo utilizado e o E07, baseado em InceptionResnetV1,
-com embeddings de 512 dimensoes e comparacao por similaridade
-de cosseno.
+O backend FastAPI disponibiliza reconhecimento facial 1:N por HTTPS para as interfaces web e Android.
 
 ### Funcionalidades da interface
 
-A interface possui seis paginas:
+A interface possui seis páginas:
 
 - Dashboard: indicadores, informações do modelo e eventos recentes.
 - Reconhecimento: identificação facial utilizando a câmera.
-- Pessoas: cadastro, listagem e exclusao de pessoas.
+- Pessoas: cadastro, listagem e exclusão de pessoas.
 - Histórico: consulta de reconhecimentos registrados.
-- Seguranca: consulta de eventos de auditoria.
+- Segurança: consulta de eventos de auditoria.
 - Configurações: informações e estado da aplicação.
 
-### Instalação e execução no Windows
+### Instalação e execução no Windows (web e API)
 
 Na raiz do projeto, com Python 3.11 instalado:
 
@@ -199,28 +173,38 @@ Inicie o servidor:
 python -m app.main
 ```
 
-Acesse [Acessar aplicacao](https://127.0.0.1:8443) no navegador.
+Acesse a interface em `https://127.0.0.1:8443` no navegador.
+
+#### Inicialização com galeria vazia
+
+Com `FACEREC_GALLERY` definido como `embeddings/gallery_demo.npz`, se esse arquivo ainda não existir, a aplicação inicia sem pessoas cadastradas. Para verificar, execute em outro terminal:
+
+```powershell
+curl.exe -k https://127.0.0.1:8443/status
+```
+
+O endpoint deverá informar `"pessoas_cadastradas": 0` para a galeria vazia. Os cadastros posteriores são persistidos localmente, sem necessidade de retreinar o modelo. O parâmetro `-k` ignora a validação do certificado e deve ser usado somente em testes locais com certificado autoassinado.
 
 O modelo precisa estar disponível em
 `runs/e07_facenet_full/best.pt`, acompanhado de `meta.json`. **Os pesos não estão no GitHub**: para reproduzir a inferência, é necessário obter ou treinar o checkpoint correspondente. Galerias e certificados locais também não são distribuídos.
 
 ### Endpoints da API
 
-| Metodo | Rota | Finalidade |
+| Método | Rota | Finalidade |
 |---|---|---|
 | GET | / | Interface web |
 | GET | /status | Estado da aplicação |
 | POST | /reconhecer | Reconhecimento facial |
 | GET | /pessoas | Listagem administrativa |
 | POST | /pessoas | Cadastro de pessoas |
-| DELETE | /pessoas/{nome} | Exclusao de cadastro |
-| GET | /historico | Historico de reconhecimentos |
-| GET | /seguranca/auditoria | Auditoria de seguranca |
+| DELETE | /pessoas/{nome} | Exclusão de cadastro |
+| GET | /historico | Histórico de reconhecimentos |
+| GET | /seguranca/auditoria | Auditoria de segurança |
 
-As rotas administrativas exigem o cabecalho X-Porteiro-Token.
+As rotas administrativas exigem o cabeçalho X-Porteiro-Token.
 
-O cadastro exige pelo menos três imagens com rostos validos.
-A decisão de reconhecimento e realizada pelo servidor.
+O cadastro exige pelo menos três imagens com rostos válidos.
+A decisão de reconhecimento é realizada pelo servidor.
 
 ### Histórico de reconhecimentos
 
@@ -235,18 +219,18 @@ A aplicação inclui:
 
 - HTTPS local.
 - Autenticação administrativa por token.
-- Cabeçalhos de seguranca HTTP.
-- Restricoes de CORS.
+- Cabeçalhos de segurança HTTP.
+- Restrições de CORS.
 - Validação de imagens recebidas.
 - Limite de tamanho das requisições.
 - Registro de eventos administrativos em SQLite.
 - Rate limiting para requisições de reconhecimento.
 
-O rate limiting possui configuração por variaveis de ambiente.
-A ativacao e os limites efetivos dependem da configuração
+O rate limiting possui configuração por variáveis de ambiente.
+A ativação e os limites efetivos dependem da configuração
 do servidor.
 
-### Aplicativo Android - Next Face Premium
+### Aplicativo Android — Next Face Premium
 
 Além da interface web, o projeto possui um aplicativo Android nativo,
 desenvolvido em Kotlin e integrado ao backend FastAPI.
@@ -363,8 +347,7 @@ de Inteligência Artificial por interfaces web e mobile.
 
 #### Limitações do Android
 
-- O aplicativo depende do backend FastAPI em execução.
-- O reconhecimento facial não é realizado localmente no smartphone.
+- O aplicativo requer conexão com o backend FastAPI; não executa a inferência no dispositivo.
 - A configuração testada utiliza USB e encaminhamento de porta ADB.
 - O certificado TLS é destinado ao ambiente local de desenvolvimento.
 - O APK não foi preparado para distribuição pública em produção.
@@ -406,27 +389,10 @@ Foram verificados:
 
 A câmera do navegador também foi testada com sucesso.
 
-A suíte automatizada foi executada com `python -m pytest -q`,
-com resultado de **155 testes aprovados**.
+### Limitações de implantação
 
-### Limitações e reprodutibilidade
+O desempenho pode variar com iluminação, pose e qualidade de captura. O ambiente demonstrado utiliza HTTPS local com certificado de desenvolvimento e não representa uma implantação de produção. A inferência requer o checkpoint E07 correspondente, não distribuído no repositório.
 
-- O sistema utiliza MTCNN para detecção facial e oferece
-  os modos `legacy` (recorte convencional) e `aligned`
-  (alinhamento geométrico por cinco landmarks).
-  O modo `legacy` permanece como padrão.
-- A inferência com o E07 requer `best.pt` e `meta.json`
-  compatíveis em `runs/e07_facenet_full/`.
-- Os pesos do modelo não são distribuídos pelo
-  repositório. Para reproduzir a inferência, é
-  necessário obter legitimamente o checkpoint correspondente
-  ou executar o treinamento documentado.
-- O desempenho pode variar conforme iluminação,
-  pose, qualidade da imagem e condições de captura.
-- O aplicativo Android depende de um servidor FastAPI ativo.
-- O ambiente demonstrado utiliza HTTPS local com certificado
-  de desenvolvimento e não representa uma implantação
-  de produção.
 
 ## Avaliação experimental do alinhamento facial — E07
 
@@ -547,70 +513,4 @@ O desenvolvimento contou com assistência de ferramentas de inteligência artifi
 
 O autor permanece responsável por compreender, validar e explicar a arquitetura, as funções de perda (*losses*), o treinamento, as métricas e as decisões técnicas do projeto.
 
-Por questões de privacidade e conformidade com a LGPD, fotografias, embeddings e checkpoints privados não devem ser compartilhados com assistentes de IA.
-
-### Inicialização com galeria vazia
-
-A aplicação foi validada utilizando o experimento `e07_facenet_full`, com embeddings de **512 dimensões** e limiar de identificação `0.5838396380334074`.
-
-O checkpoint e os metadados devem estar disponíveis localmente em:
-
-`runs/e07_facenet_full/`
-
-Esses arquivos não são distribuídos pelo repositório.
-
-#### 1. Configuração do ambiente
-
-Na raiz do projeto, com o ambiente virtual ativado, configure as variáveis de ambiente no PowerShell:
-
-```powershell
-$env:FACEREC_RUN = "runs/e07_facenet_full"
-$env:FACEREC_GALLERY = "embeddings/gallery_demo.npz"
-$env:PORTEIRO_TOKEN = python -c "import secrets; print(secrets.token_urlsafe(32))"
-```
-
-O token administrativo é gerado aleatoriamente para a sessão atual do PowerShell. Seu valor não deve ser publicado.
-
-#### 2. Certificado HTTPS
-
-Caso ainda não tenha gerado o certificado TLS local, execute:
-
-```powershell
-python scripts/gerar_certificado.py
-```
-
-#### 3. Inicialização do servidor
-
-Execute:
-
-```powershell
-python -m app.main
-```
-
-A interface web ficará disponível em:
-
-`https://127.0.0.1:8443`
-
-#### 4. Verificação da galeria
-
-Em outro terminal, execute:
-
-```powershell
-curl.exe -k https://127.0.0.1:8443/status
-```
-
-Se `embeddings/gallery_demo.npz` ainda não existir, a aplicação inicia com uma galeria vazia e o endpoint retorna:
-
-```json
-{
-  "pessoas_cadastradas": 0
-}
-```
-
-O exemplo apresenta apenas o campo relevante da resposta; o endpoint também fornece informações do modelo e do ambiente de execução.
-
-Em execuções posteriores, os cadastros realizados nessa galeria são preservados.
-
-A partir desse estado, o administrador pode cadastrar novas pessoas utilizando imagens fornecidas com consentimento, sem necessidade de retreinar o modelo.
-
-**Observação de segurança:** o parâmetro `-k` desabilita a verificação do certificado exclusivamente para testes locais com certificado autoassinado. Não deve ser utilizado como prática de segurança em produção.
+Fotografias, embeddings e checkpoints privados não devem ser compartilhados com assistentes de IA, conforme a política descrita na seção **Privacidade (LGPD)**.
