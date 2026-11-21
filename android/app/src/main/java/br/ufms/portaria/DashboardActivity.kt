@@ -32,8 +32,12 @@ class DashboardActivity : AppCompatActivity() {
             startActivity(Intent(this, ConfiguracoesActivity::class.java))
         }
 
-        carregarIndicadores()
         solicitarTokenAdministrativo()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        carregarIndicadores()
     }
 
 
