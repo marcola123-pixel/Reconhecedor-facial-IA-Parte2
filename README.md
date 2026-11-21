@@ -187,7 +187,7 @@ Configure o experimento e a galeria:
 
 ```powershell
 $env:FACEREC_RUN = "runs/e07_facenet_full"
-$env:FACEREC_GALLERY = "embeddings/gallery_e07_v2.npz"
+$env:FACEREC_GALLERY = "embeddings/gallery_demo.npz"
 $env:PORTEIRO_TOKEN = python -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
 
@@ -546,7 +546,7 @@ Para executar a aplicação no Windows, configure as variáveis de ambiente no P
 
 ```powershell
 $env:FACEREC_RUN = "runs/e07_facenet_full"
-$env:FACEREC_GALLERY = "embeddings/gallery_entrega_teste.npz"
+$env:FACEREC_GALLERY = "embeddings/gallery_demo.npz"
 $env:PORTEIRO_TOKEN = python -c "import secrets; print(secrets.token_urlsafe(32))"
 python -m app.main
 ```
@@ -561,7 +561,7 @@ Para verificar a inicialização:
 curl.exe -k https://127.0.0.1:8443/status
 ```
 
-Em uma galeria nova, o endpoint retorna `pessoas_cadastradas: 0`.
+Se `embeddings/gallery_demo.npz` ainda n?o existir, a aplica??o inicia com uma galeria vazia e o endpoint retorna `pessoas_cadastradas: 0`. Em execu??es posteriores, os cadastros realizados nessa galeria s?o preservados.
 
 A partir desse estado, o administrador pode cadastrar novas pessoas utilizando imagens fornecidas com consentimento, sem necessidade de retreinar o modelo.
 
