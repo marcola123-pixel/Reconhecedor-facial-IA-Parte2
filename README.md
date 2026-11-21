@@ -534,35 +534,83 @@ Fotos, nomes, embeddings, galeria, checkpoints e termos de consentimento **não*
 
 ## Spec-Driven Development e uso de IA
 
-Requisitos → especificação → critérios de aceitação → implementação → testes, em `docs/specs/` e `docs/decisions/`. O código foi desenvolvido com assistência de IA (Claude) a partir dessas especificações; o autor é responsável por compreender e explicar arquitetura, losses, treino, métricas e decisões. Nenhuma foto, embedding ou checkpoint privado foi/deve ser enviado a assistentes de IA.
+O desenvolvimento do projeto seguiu os princípios de **Spec-Driven Development (SDD)**, com o seguinte fluxo:
+
+**Requisitos → Especificações → Critérios de aceitação → Implementação → Testes.**
+
+As especificações e decisões arquiteturais estão documentadas em:
+
+- `docs/specs/` — requisitos, especificações e critérios de aceitação.
+- `docs/decisions/` — registros de decisões arquiteturais (ADRs).
+
+O desenvolvimento contou com assistência de ferramentas de inteligência artificial, utilizadas como apoio à implementação, revisão de código, documentação e testes.
+
+O autor permanece responsável por compreender, validar e explicar a arquitetura, as funções de perda (*losses*), o treinamento, as métricas e as decisões técnicas do projeto.
+
+Por questões de privacidade e conformidade com a LGPD, fotografias, embeddings e checkpoints privados não devem ser compartilhados com assistentes de IA.
 
 ### Inicialização com galeria vazia
 
-A aplicação foi validada utilizando o experimento `e07_facenet_full`, com embeddings de 512 dimensões e limiar de identificação `0.5838396380334074`.
+A aplicação foi validada utilizando o experimento `e07_facenet_full`, com embeddings de **512 dimensões** e limiar de identificação `0.5838396380334074`.
 
-O checkpoint e os metadados devem estar disponíveis localmente em `runs/e07_facenet_full/`. Esses arquivos não são distribuídos pelo repositório.
+O checkpoint e os metadados devem estar disponíveis localmente em:
 
-Para executar a aplicação no Windows, configure as variáveis de ambiente no PowerShell:
+`runs/e07_facenet_full/`
+
+Esses arquivos não são distribuídos pelo repositório.
+
+#### 1. Configuração do ambiente
+
+Na raiz do projeto, com o ambiente virtual ativado, configure as variáveis de ambiente no PowerShell:
 
 ```powershell
 $env:FACEREC_RUN = "runs/e07_facenet_full"
 $env:FACEREC_GALLERY = "embeddings/gallery_demo.npz"
 $env:PORTEIRO_TOKEN = python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+O token administrativo é gerado aleatoriamente para a sessão atual do PowerShell. Seu valor não deve ser publicado.
+
+#### 2. Certificado HTTPS
+
+Caso ainda não tenha gerado o certificado TLS local, execute:
+
+```powershell
+python scripts/gerar_certificado.py
+```
+
+#### 3. Inicialização do servidor
+
+Execute:
+
+```powershell
 python -m app.main
 ```
 
-O certificado TLS deve ter sido gerado previamente por `scripts/gerar_certificado.py`.
+A interface web ficará disponível em:
 
-A aplicação pode ser iniciada com uma galeria local vazia, sem fotografias ou embeddings de participantes.
+`https://127.0.0.1:8443`
 
-Para verificar a inicialização:
+#### 4. Verificação da galeria
+
+Em outro terminal, execute:
 
 ```powershell
 curl.exe -k https://127.0.0.1:8443/status
 ```
 
-Se `embeddings/gallery_demo.npz` ainda n?o existir, a aplica??o inicia com uma galeria vazia e o endpoint retorna `pessoas_cadastradas: 0`. Em execu??es posteriores, os cadastros realizados nessa galeria s?o preservados.
+Se `embeddings/gallery_demo.npz` ainda não existir, a aplicação inicia com uma galeria vazia e o endpoint retorna:
+
+```json
+{
+  "pessoas_cadastradas": 0
+}
+```
+
+O exemplo apresenta apenas o campo relevante da resposta; o endpoint também fornece informações do modelo e do ambiente de execução.
+
+Em execuções posteriores, os cadastros realizados nessa galeria são preservados.
 
 A partir desse estado, o administrador pode cadastrar novas pessoas utilizando imagens fornecidas com consentimento, sem necessidade de retreinar o modelo.
 
-**Observação:** o parâmetro `-k` desabilita a verificação do certificado exclusivamente para testes locais com certificado autoassinado. Não deve ser utilizado como prática de segurança em produção.
+**Observação de segurança:** o parâmetro `-k` desabilita a verificação do certificado exclusivamente para testes locais com certificado autoassinado. Não deve ser utilizado como prática de segurança em produção.
